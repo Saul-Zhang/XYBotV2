@@ -318,7 +318,8 @@ class XYBot:
             await self.process_file_message(message)
         elif type == 74:  # 文件消息，但还在上传，不用管
             pass
-
+        elif type == 49:
+            await self.process_url_message(message)
         else:
             logger.info("未知的xml消息类型: {}", message)
 
@@ -427,6 +428,30 @@ class XYBot:
                 await EventManager.emit("quote_message", self.bot, message)
             else:
                 logger.warning("风控保护: 新设备登录后4小时内请挂机")
+
+    async def process_url_message(self, message):
+        """处理微信公众号，小程序消息"""
+        try:
+            root = ET.fromstring(message["Content"])
+            type = int(root.find("appmsg").find("type").text)
+            if type == 5:
+                # 公众号消息
+                await self.process_official_account_message(message)
+            else:
+                logger.info("未知的url消息类型: {}", message)
+        except Exception as e:
+            logger.error(f"解析url消息失败: {e}")
+            return
+        
+    async def process_official_account_message(self, message):
+        """处理公众号消息"""
+        root = ET.fromstring(message["Content"])
+        title = root.find("appmsg").find("title").text
+        logger.info("收到公众号消息: 消息ID:{} 来自:{} 发送人:{} 标题:{}",
+                    message["MsgId"],
+                    message["FromWxid"],
+                    message["SenderWxid"],
+                    title)
 
     async def process_video_message(self, message):
         # 预处理消息
