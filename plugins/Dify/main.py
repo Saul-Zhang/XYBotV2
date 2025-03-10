@@ -60,11 +60,12 @@ class Dify(PluginBase):
         if (not command or command[0] not in self.commands) and message["IsGroup"]:  # 不是指令，且是群聊
             return
         elif len(command) == 1 and command[0] in self.commands:  # 只是指令，但没请求内容
-            await bot.send_at_message(message["FromWxid"], "\n" + self.command_tip, [message["SenderWxid"]])
+            # await bot.send_at_message(message["FromWxid"], "\n" + self.command_tip, [message["SenderWxid"]])
             return
 
         if not self.api_key:
-            await bot.send_at_message(message["FromWxid"], "\n你还没配置Dify API密钥！", [message["SenderWxid"]])
+            # await bot.send_at_message(message["FromWxid"], "\n你还没配置Dify API密钥！", [message["SenderWxid"]])
+            logger("Dify API密钥未配置")
             return False
 
         if await self._check_point(bot, message):
@@ -77,7 +78,8 @@ class Dify(PluginBase):
             return
 
         if not self.api_key:
-            await bot.send_at_message(message["FromWxid"], "\n你还没配置Dify API密钥！", [message["SenderWxid"]])
+            # await bot.send_at_message(message["FromWxid"], "\n你还没配置Dify API密钥！", [message["SenderWxid"]])
+            logger.error("Dify API密钥未配置")
             return False
 
         if await self._check_point(bot, message):
@@ -94,7 +96,8 @@ class Dify(PluginBase):
             return
 
         if not self.api_key:
-            await bot.send_at_message(message["FromWxid"], "\n你还没配置Dify API密钥！", [message["SenderWxid"]])
+            # await bot.send_at_message(message["FromWxid"], "\n你还没配置Dify API密钥！", [message["SenderWxid"]])
+            logger.error("Dify API密钥未配置")
             return False
 
         if await self._check_point(bot, message):
@@ -121,7 +124,8 @@ class Dify(PluginBase):
             return
 
         if not self.api_key:
-            await bot.send_at_message(message["FromWxid"], "\n你还没配置Dify API密钥！", [message["SenderWxid"]])
+            # await bot.send_at_message(message["FromWxid"], "\n你还没配置Dify API密钥！", [message["SenderWxid"]])
+            logger.error("Dify API密钥未配置")
             return False
 
         if await self._check_point(bot, message):
@@ -148,7 +152,8 @@ class Dify(PluginBase):
             return
 
         if not self.api_key:
-            await bot.send_at_message(message["FromWxid"], "\n你还没配置Dify API密钥！", [message["SenderWxid"]])
+            # await bot.send_at_message(message["FromWxid"], "\n你还没配置Dify API密钥！", [message["SenderWxid"]])
+            logger.error("Dify API密钥未配置")
             return False
 
         if await self._check_point(bot, message):
@@ -175,7 +180,8 @@ class Dify(PluginBase):
             return
 
         if not self.api_key:
-            await bot.send_at_message(message["FromWxid"], "\n你还没配置Dify API密钥！", [message["SenderWxid"]])
+            # await bot.send_at_message(message["FromWxid"], "\n你还没配置Dify API密钥！", [message["SenderWxid"]])
+            logger.error("Dify API密钥未配置")
             return False
 
         if await self._check_point(bot, message):
@@ -323,26 +329,29 @@ class Dify(PluginBase):
     @staticmethod
     async def dify_handle_error(bot: WechatAPIClient, message: dict, task_id: str, message_id: str, status: str,
                                 code: int, err_message: str):
-        output = ("-----XYBot-----\n"
-                  "🙅对不起，Dify出现错误！\n"
-                  f"任务 ID：{task_id}\n"
-                  f"消息唯一 ID：{message_id}\n"
-                  f"HTTP 状态码：{status}\n"
-                  f"错误码：{code}\n"
+        output = (
+                  "🙅对不起，Dify出现错误"
+                  f"任务 ID：{task_id}"
+                  f"消息唯一 ID：{message_id}"
+                  f"HTTP 状态码：{status}"
+                  f"错误码：{code}"
                   f"错误信息：{err_message}")
-        await bot.send_at_message(message["FromWxid"], "\n" + output, [message["SenderWxid"]])
+        # await bot.send_at_message(message["FromWxid"], "\n" + output, [message["SenderWxid"]])
+        logger.error(output)
 
     @staticmethod
     async def handle_400(bot: WechatAPIClient, message: dict, resp: aiohttp.ClientResponse):
         output = ("-----XYBot-----\n"
                   "🙅对不起，出现错误！\n"
                   f"错误信息：{(await resp.content.read()).decode('utf-8')}")
-        await bot.send_at_message(message["FromWxid"], "\n" + output, [message["SenderWxid"]])
+        # await bot.send_at_message(message["FromWxid"], "\n" + output, [message["SenderWxid"]])
+        logger.error(output)
 
     @staticmethod
     async def handle_500(bot: WechatAPIClient, message: dict):
         output = "-----XYBot-----\n🙅对不起，Dify服务内部异常，请稍后再试。"
-        await bot.send_at_message(message["FromWxid"], "\n" + output, [message["SenderWxid"]])
+        # await bot.send_at_message(message["FromWxid"], "\n" + output, [message["SenderWxid"]])
+        logger.error(output)
 
     @staticmethod
     async def handle_other_status(bot: WechatAPIClient, message: dict, resp: aiohttp.ClientResponse):
@@ -350,7 +359,8 @@ class Dify(PluginBase):
                    f"🙅对不起，出现错误！\n"
                    f"状态码：{resp.status}\n"
                    f"错误信息：{(await resp.content.read()).decode('utf-8')}")
-        await bot.send_at_message(message["FromWxid"], "\n" + ai_resp, [message["SenderWxid"]])
+        # await bot.send_at_message(message["FromWxid"], "\n" + ai_resp, [message["SenderWxid"]])
+        logger.error(ai_resp)
 
     @staticmethod
     async def hendle_exceptions(bot: WechatAPIClient, message: dict):
@@ -358,7 +368,8 @@ class Dify(PluginBase):
                   "🙅对不起，出现错误！\n"
                   f"错误信息：\n"
                   f"{traceback.format_exc()}")
-        await bot.send_at_message(message["FromWxid"], "\n" + output, [message["SenderWxid"]])
+        # await bot.send_at_message(message["FromWxid"], "\n" + output, [message["SenderWxid"]])
+        logger.error(output)
 
     async def _check_point(self, bot: WechatAPIClient, message: dict) -> bool:
         wxid = message["SenderWxid"]
