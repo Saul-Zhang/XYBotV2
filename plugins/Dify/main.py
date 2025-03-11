@@ -81,19 +81,19 @@ class Dify(PluginBase):
 
         command = str(message["Content"]).strip().split(" ")
 
-        if (not command or command[0] not in self.commands) and message["IsGroup"]:  # 不是指令，且是群聊
-            return
-        elif len(command) == 1 and command[0] in self.commands:  # 只是指令，但没请求内容
-            # await bot.send_at_message(message["FromWxid"], "\n" + self.command_tip, [message["SenderWxid"]])
-            return
+        # if (not command or command[0] not in self.commands) and message["IsGroup"]:  # 不是指令，且是群聊
+        #     return
+        # elif len(command) == 1 and command[0] in self.commands:  # 只是指令，但没请求内容
+        #     # await bot.send_at_message(message["FromWxid"], "\n" + self.command_tip, [message["SenderWxid"]])
+        #     return
 
         if not self.api_key:
             # await bot.send_at_message(message["FromWxid"], "\n你还没配置Dify API密钥！", [message["SenderWxid"]])
             logger.error("Dify API密钥未配置")
             return False
 
-        if await self._check_point(bot, message):
-            await self.dify(bot, message, message["Content"])
+        # if await self._check_point(bot, message):
+        await self.dify(bot, message, message["Content"])
         return False
 
     @on_at_message(priority=20)
