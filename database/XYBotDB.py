@@ -35,6 +35,14 @@ class Chatroom(Base):
     members = Column(JSON, nullable=False, default=list, comment='members')
     llm_thread_id = Column(JSON, nullable=False, default=lambda: {}, comment='llm_thread_id')
 
+class Config(Base):
+    __tablename__ = 'config'
+
+    id = Column(Integer, primary_key=True, autoincrement=True, comment='配置ID')
+    plugin_name = Column(String(50), nullable=False, unique=True, index=True, comment='插件名称')
+    config_data = Column(JSON, nullable=False, default=lambda: {}, comment='配置数据')
+    last_modified = Column(DateTime, nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now, comment='最后修改时间')
+
 
 class XYBotDB(metaclass=Singleton):
     def __init__(self):
@@ -49,8 +57,42 @@ class XYBotDB(metaclass=Singleton):
         Base.metadata.create_all(self.engine)
         logger.success("数据库初始化成功")
 
+        # 初始化配置数据
+        self._init_config_data()
+
         # 创建线程池执行器
         self.executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="database")
+
+    def _init_config_data(self):
+        """初始化配置表数据"""
+        session = self.DBSession()
+        try:
+            # Dify插件初始配置
+            dify_config = {
+                "enable": True,
+                "api-key": "app-HOCPuTnVuv7HO2AccaBnFjIo",
+                "base-url": "https://api.dify.ai/v1",
+                "commands": ["ai", "dify", "聊天", "AI"],
+                "command-tip": "💬AI聊天指令：\n聊天 请求内容",
+                "price": 0,
+                "admin_ignore": True,
+                "whitelist_ignore": True,
+                "http-proxy": ""
+            }
+            if not session.query(Config).filter_by(plugin_name="Dify").first():
+                config = Config(plugin_name="Dify", config_data=dify_config)
+                session.add(config)
+
+            # 其他插件初始配置可以在这里添加
+            # ...
+
+            session.commit()
+            logger.info("数据库: 成功初始化配置表数据")
+        except Exception as e:
+            session.rollback()
+            logger.error(f"数据库: 初始化配置表数据失败, 错误: {e}")
+        finally:
+            session.close()
 
     def _execute_in_queue(self, method, *args, **kwargs):
         """在队列中执行数据库操作"""
@@ -432,6 +474,34 @@ class XYBotDB(metaclass=Singleton):
         finally:
             session.close()
 
+    # CONFIG
+    def get_config(self, plugin_name: str) -> dict:
+        """Get config data for a plugin"""
+        session = self.DBSession()
+        try:
+            config = session.query(Config).filter_by(plugin_name=plugin_name).first()
+            return config.config_data if config else {}
+        finally:
+            session.close()
+
+    def save_config(self, plugin_name: str, config_data: dict) -> bool:
+        """保存插件配置"""
+        session = self.DBSession()
+        try:
+            config = session.query(Config).filter_by(plugin_name=plugin_name).first()
+            if not config:
+                config = Config(plugin_name=plugin_name)
+                session.add(config)
+            config.config_data = config_data
+            session.commit()
+            logger.info(f"数据库: 成功保存 {plugin_name} 的配置")
+            return True
+        except Exception as e:
+            session.rollback()
+            logger.error(f"数据库: 保存 {plugin_name} 配置失败, 错误: {e}")
+            return False
+        finally:
+            session.close()
     def __del__(self):
         """确保关闭时清理资源"""
         if hasattr(self, 'executor'):

@@ -25,30 +25,52 @@ class Dify(PluginBase):
     def __init__(self):
         super().__init__()
 
-        with open("main_config.toml", "rb") as f:
-            config = tomllib.load(f)
-
-        self.admins = config["XYBot"]["admins"]
-
-        with open("plugins/Dify/config.toml", "rb") as f:
-            config = tomllib.load(f)
-
-        plugin_config = config["Dify"]
-
-        self.enable = plugin_config["enable"]
-        self.api_key = plugin_config["api-key"]
-        self.base_url = plugin_config["base-url"]
-
-        self.commands = plugin_config["commands"]
-        self.command_tip = plugin_config["command-tip"]
-
-        self.price = plugin_config["price"]
-        self.admin_ignore = plugin_config["admin_ignore"]
-        self.whitelist_ignore = plugin_config["whitelist_ignore"]
-
-        self.http_proxy = plugin_config["http-proxy"]
+        # with open("main_config.toml", "rb") as f:
+        #     config = tomllib.load(f)
+        #
+        # self.admins = config["XYBot"]["admins"]
+        #
+        # with open("plugins/Dify/config.toml", "rb") as f:
+        #     config = tomllib.load(f)
+        #
+        # plugin_config = config["Dify"]
+        #
+        # self.enable = plugin_config["enable"]
+        # self.api_key = plugin_config["api-key"]
+        # self.base_url = plugin_config["base-url"]
+        #
+        # self.commands = plugin_config["commands"]
+        # self.command_tip = plugin_config["command-tip"]
+        #
+        # self.price = plugin_config["price"]
+        # self.admin_ignore = plugin_config["admin_ignore"]
+        # self.whitelist_ignore = plugin_config["whitelist_ignore"]
+        #
+        # self.http_proxy = plugin_config["http-proxy"]
+        self._config_cache = {}
+        self._load_config()
 
         self.db = XYBotDB()
+    def _load_config(self):
+        """从数据库加载配置"""
+        config = self.db.get_config("Dify")
+        self._config_cache = {
+            'enable': config.get("enable", False),
+            'api_key': config.get("api-key", ""),
+            'base_url': config.get("base-url", "https://api.dify.ai/v1"),
+            'commands': config.get("commands", ["ai", "dify", "聊天", "AI"]),
+            'command_tip': config.get("command-tip", "💬AI聊天指令：\n聊天 请求内容"),
+            'price': config.get("price", 0),
+            'admin_ignore': config.get("admin_ignore", True),
+            'whitelist_ignore': config.get("whitelist_ignore", True),
+            'http_proxy': config.get("http-proxy", "")
+        }
+
+    def __getattr__(self, name):
+        """动态获取配置项"""
+        if name in self._config_cache:
+            return self._config_cache[name]
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
     @on_text_message(priority=20)
     async def handle_text(self, bot: WechatAPIClient, message: dict):
@@ -65,7 +87,7 @@ class Dify(PluginBase):
 
         if not self.api_key:
             # await bot.send_at_message(message["FromWxid"], "\n你还没配置Dify API密钥！", [message["SenderWxid"]])
-            logger("Dify API密钥未配置")
+            logger.error("Dify API密钥未配置")
             return False
 
         if await self._check_point(bot, message):
