@@ -24,7 +24,7 @@ class Dify(PluginBase):
 
     def __init__(self):
         super().__init__()
-
+        self.db = XYBotDB()
         # with open("main_config.toml", "rb") as f:
         #     config = tomllib.load(f)
         #
@@ -50,7 +50,6 @@ class Dify(PluginBase):
         self._config_cache = {}
         self._load_config()
 
-        self.db = XYBotDB()
     def _load_config(self):
         """从数据库加载配置"""
         config = self.db.get_config("Dify")
