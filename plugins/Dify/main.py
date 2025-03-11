@@ -64,9 +64,11 @@ class Dify(PluginBase):
             'whitelist_ignore': config.get("whitelist_ignore", True),
             'http_proxy': config.get("http-proxy", "")
         }
+        logger.info(f"Dify配置加载完成: {self._config_cache}")
 
     def __getattr__(self, name):
         """动态获取配置项"""
+        logger.info(f"Dify配置项: {name}, {self._config_cache}")
         if name in self._config_cache:
             return self._config_cache[name]
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
@@ -74,6 +76,7 @@ class Dify(PluginBase):
     @on_text_message(priority=20)
     async def handle_text(self, bot: WechatAPIClient, message: dict):
         if not self.enable:
+            logger.error("Dify插件未启用")
             return
 
         command = str(message["Content"]).strip().split(" ")
