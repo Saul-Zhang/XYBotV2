@@ -6,7 +6,7 @@ import aiohttp
 from loguru import logger
 from tabulate import tabulate
 
-from WechatAPI import WechatAPIClient
+import WechatAPI
 from utils.decorators import *
 from utils.plugin_base import PluginBase
 from database.XYBotDB import XYBotDB
@@ -24,6 +24,8 @@ class GetContact(PluginBase):
         config = self.db.get_config("GetContact")
         self.enable = config.get("enable", False)
         self.command = config.get("command", ["获取联系人"])
+        bot = WechatAPI.WechatAPIClient("127.0.0.1", 9000)
+        self.fetch_and_save_contacts(bot)
         # with open("plugins/GetContact/config.toml", "rb") as f:
         #     plugin_config = tomllib.load(f)
 
