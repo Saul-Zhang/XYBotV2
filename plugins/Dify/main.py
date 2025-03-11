@@ -68,7 +68,6 @@ class Dify(PluginBase):
 
     def __getattr__(self, name):
         """动态获取配置项"""
-        logger.info(f"Dify配置项: {name}, {self._config_cache}")
         if name in self._config_cache:
             return self._config_cache[name]
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
@@ -328,7 +327,12 @@ class Dify(PluginBase):
         pattern = r'\[[^\]]+\]\(https?:\/\/[^\s\)]+\)'
         text = re.sub(pattern, '', text)
         if text:
-            await bot.send_at_message(message["FromWxid"], "\n" + text, [message["SenderWxid"]])
+            # 如果FromWxid包含@chatroom则是是群消息，就@发送者，否则个人消息不@
+            if "@chatroom" in message["FromWxid"]:
+                await bot.send_at_message(message["FromWxid"], "\n" + text, [message["SenderWxid"]])
+            else:
+                await bot.send_text_message(message["FromWxid"], text)
+            # await bot.send_at_message(message["FromWxid"], "\n" + text, [message["SenderWxid"]])
 
     async def download_file(self, url: str) -> bytes:
         async with aiohttp.ClientSession(proxy=self.http_proxy) as session:

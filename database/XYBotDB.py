@@ -20,11 +20,16 @@ class User(Base):
 
     wxid = Column(String(20), primary_key=True, nullable=False, unique=True, index=True, autoincrement=False,
                   comment='wxid')
+    wx_num = Column(String(20), nullable=False, default="", comment='wx_num')
     points = Column(Integer, nullable=False, default=0, comment='points')
     signin_stat = Column(DateTime, nullable=False, default=datetime.datetime.fromtimestamp(0), comment='signin_stat')
     signin_streak = Column(Integer, nullable=False, default=0, comment='signin_streak')
     whitelist = Column(Boolean, nullable=False, default=False, comment='whitelist')
     llm_thread_id = Column(JSON, nullable=False, default=lambda: {}, comment='llm_thread_id')
+    nickname = Column(String(50), nullable=False, default="", comment='nickname')
+    big_head_img_url = Column(String(255), nullable=False, default="", comment='big_head_img_url')
+    remark = Column(String(255), nullable=False, default="", comment='remark')
+    ai_enabled = Column(Boolean, nullable=False, default=False, comment='ai_enabled')
 
 
 class Chatroom(Base):
@@ -83,8 +88,14 @@ class XYBotDB(metaclass=Singleton):
                 config = Config(plugin_name="Dify", config_data=dify_config)
                 session.add(config)
 
-            # 其他插件初始配置可以在这里添加
-            # ...
+            # 获取联系人插件初始配置
+            get_contact_config = {
+                "enable": True,
+                "command": ["获取联系人", "联系人", "通讯录", "获取通讯录"]
+            }
+            if not session.query(Config).filter_by(plugin_name="GetContact").first():
+                config = Config(plugin_name="GetContact", config_data=get_contact_config)
+                session.add(config) 
 
             session.commit()
             logger.info("数据库: 成功初始化配置表数据")
@@ -104,6 +115,30 @@ class XYBotDB(metaclass=Singleton):
             raise
 
     # USER
+
+    def save_or_update_contact(self, user: User) -> bool:
+        """保存或更新联系人信息"""
+        session = self.DBSession()
+        try:
+            user = session.query(User).filter_by(wxid=user.wxid).first()
+            if not user:
+                session.add(user)
+            else:
+                user.nickname = user.nickname
+                user.remark = user.remark
+                # user.whitelist = user.whitelist
+                user.big_head_img_url = user.big_head_img_url
+                # user.ai_enabled = user.ai_enabled
+            session.commit()
+            logger.info(f"数据库: 成功保存或更新联系人{user.nickname}")
+            return True
+        except Exception as e:
+            session.rollback()
+            logger.error(f"数据库: 保存或更新联系人{user.nickname}失败, 错误: {e}")
+            return False
+        finally:
+            session.close()
+        
 
     def add_points(self, wxid: str, num: int) -> bool:
         """Thread-safe point addition"""

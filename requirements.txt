@@ -21,3 +21,5 @@ requests~=2.32.3
 pillow~=10.4.0
 pydantic~=2.10.5
 aiosqlite~=0.20.0
+flask~=3.0.2
+flask-cors~=4.0.0
