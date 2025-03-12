@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XYBot 管理系统</title>
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/all.min.css') }}" rel="stylesheet">
+
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" type="text/css">
+</head>
+<body class="dark-theme">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-robot"></i>
+            <span>XYBot 管理系统</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-link active" href="#" data-page="contacts">
+                <i class="fas fa-address-book"></i>
+                <span>联系人管理</span>
+            </a>
+            <a class="nav-link" href="#" data-page="config">
+                <i class="fas fa-cogs"></i>
+                <span>系统配置</span>
+            </a>
+            <a class="nav-link" href="#" data-page="plugins">
+                <i class="fas fa-puzzle-piece"></i>
+                <span>插件管理</span>
+            </a>
+            <a class="nav-link" href="#" data-page="status">
+                <i class="fas fa-chart-line"></i>
+                <span>运行状态</span>
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div id="status-bar" class="status-panel">
+            <div class="status-item">
+                <i class="fas fa-signal"></i>
+                <span id="bot-status">检查中...</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-clock"></i>
+                <span id="uptime">运行时间: 检查中...</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-envelope"></i>
+                <span id="message-count">消息数: 检查中...</span>
+            </div>
+        </div>
+
+        <div id="page-contacts" class="page active">
+            <div class="page-header">
+                <h2><i class="fas fa-address-book"></i> 联系人管理</h2>
+            </div>
+            <div class="contact-tabs">
+                <div class="tab active" data-tab="friends">
+                    <i class="fas fa-user"></i> 好友列表
+                </div>
+                <div class="tab" data-tab="groups">
+                    <i class="fas fa-users"></i> 群聊列表
+                </div>
+            </div>
+            <div class="search-bar">
+                <input type="text" class="form-control" id="contact-search" placeholder="搜索...">
+                <i class="fas fa-search search-icon"></i>
+            </div>
+            <div id="friends-list" class="contact-list active">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>头像</th>
+                                <th>微信ID</th>
+                                <th>昵称</th>
+                                <th>备注</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="friends-table"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="groups-list" class="contact-list">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>头像</th>
+                                <th>群ID</th>
+                                <th>群名称</th>
+                                <th>成员数</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="groups-table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-config" class="page">
+            <div class="page-header">
+                <h2><i class="fas fa-cogs"></i> 系统配置</h2>
+            </div>
+            <div class="config-sections">
+                <div class="config-section">
+                    <h3>服务器设置</h3>
+                    <div class="config-item">
+                        <label>服务器端口</label>
+                        <input type="number" class="form-control" name="WechatAPIServer.port" value="9000">
+                    </div>
+                    <div class="config-item">
+                        <label>运行模式</label>
+                        <select class="form-select" name="WechatAPIServer.mode">
+                            <option value="release">生产环境</option>
+                            <option value="debug">调试模式</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="config-section">
+                    <h3>Redis设置</h3>
+                    <div class="config-item">
+                        <label>Redis主机</label>
+                        <input type="text" class="form-control" name="WechatAPIServer.redis-host">
+                    </div>
+                    <div class="config-item">
+                        <label>Redis端口</label>
+                        <input type="number" class="form-control" name="WechatAPIServer.redis-port">
+                    </div>
+                    <div class="config-item">
+                        <label>Redis密码</label>
+                        <input type="password" class="form-control" name="WechatAPIServer.redis-password">
+                    </div>
+                </div>
+                <div class="config-section">
+                    <h3>机器人设置</h3>
+                    <div class="config-item">
+                        <label>版本号</label>
+                        <input type="text" class="form-control" name="XYBot.version" readonly>
+                    </div>
+                    <div class="config-item">
+                        <label>管理员列表</label>
+                        <div class="admin-list" id="admin-list">
+                            <!-- 动态添加的管理员项 -->
+                        </div>
+                        <button class="btn btn-sm btn-primary mt-2" id="add-admin">
+                            <i class="fas fa-plus"></i> 添加管理员
+                        </button>
+                    </div>
+                </div>
+                <div class="config-section">
+                    <h3>消息过滤</h3>
+                    <div class="config-item">
+                        <label>过滤模式</label>
+                        <select class="form-select" name="XYBot.ignore-mode">
+                            <option value="None">处理所有消息</option>
+                            <option value="Whitelist">仅处理白名单消息</option>
+                            <option value="Blacklist">屏蔽黑名单消息</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="config-section" id="plugins-config">
+                    <h3>插件配置</h3>
+                    <!-- 插件配置将动态加载到这里 -->
+                </div>
+            </div>
+            <div class="actions-bar">
+                <button class="btn btn-primary" id="save-config">
+                    <i class="fas fa-save"></i> 保存配置
+                </button>
+                <button class="btn btn-secondary" id="reset-config">
+                    <i class="fas fa-undo"></i> 重置
+                </button>
+            </div>
+        </div>
+
+        <div id="page-plugins" class="page">
+            <div class="page-header">
+                <h2><i class="fas fa-puzzle-piece"></i> 插件管理</h2>
+            </div>
+            <div class="plugins-grid" id="plugins-list"></div>
+        </div>
+
+        <div id="page-status" class="page">
+            <div class="page-header">
+                <h2><i class="fas fa-chart-line"></i> 运行状态</h2>
+            </div>
+            <div class="status-grid">
+                <div class="status-card">
+                    <div class="status-card-header">
+                        <i class="fas fa-signal"></i>
+                        <span>系统状态</span>
+                    </div>
+                    <div class="status-card-body">
+                        <div class="status-item">
+                            <span class="label">登录状态：</span>
+                            <span id="login-status" class="value">检查中...</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">运行时间：</span>
+                            <span id="system-uptime" class="value">检查中...</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">CPU使用率：</span>
+                            <span id="cpu-usage" class="value">检查中...</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">内存使用：</span>
+                            <span id="memory-usage" class="value">检查中...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <div class="status-card-header">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>消息统计</span>
+                    </div>
+                    <div class="status-card-body">
+                        <canvas id="message-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/all.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/Chart.min.js') }}"></script>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}" type="text/javascript"></script>
+</body>
+</html> 

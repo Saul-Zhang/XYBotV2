@@ -5,10 +5,12 @@ import time
 import tomllib
 import traceback
 from pathlib import Path
+from threading import Thread
 
 from loguru import logger
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
+from web.app import app
 
 from bot_core import bot_core
 
@@ -41,68 +43,48 @@ class ConfigChangeHandler(FileSystemEventHandler):
                 self.restart_callback()
 
 
+def run_flask():
+    """在单独的线程中运行Flask应用"""
+    app.run(host='0.0.0.0', port=5000, debug=False)
+
+
 async def main():
-    # 设置工作目录为脚本所在目录
-    script_dir = Path(__file__).resolve().parent
-    os.chdir(script_dir)
-    
-    # 读取配置文件
-    config_path = script_dir / "main_config.toml"
-    with open(config_path, "rb") as f:
-        config = tomllib.load(f)
+    try:
+        # 配置日志
+        logger.remove()
+        logger.add(
+            sys.stdout,
+            format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <level>{message}</level>",
+            level="INFO"
+        )
+        logger.add(
+            "logs/error.log",
+            format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
+            level="ERROR",
+            rotation="1 day",
+            retention="7 days"
+        )
 
-    # 检查是否启用自动重启
-    auto_restart = config.get("XYBot", {}).get("auto-restart", False)
+        # 确保logs目录存在
+        Path("logs").mkdir(exist_ok=True)
 
-    if auto_restart:
-        # 设置监控
-        observer = Observer()
-        script_dir = Path(__file__).parent
-        config_path = script_dir / "main_config.toml"
-        plugins_path = script_dir / "plugins"
+        # 在单独的线程中启动Flask应用
+        logger.info("启动Web管理界面...")
+        web_thread = Thread(target=run_flask, daemon=True)
+        web_thread.start()
+        logger.success("Web管理界面启动成功，访问 http://localhost:5000")
 
-        handler = ConfigChangeHandler(None)
+        # 启动机器人核心
+        logger.info("启动机器人核心...")
+        await bot_core()
 
-        def restart_program():
-            logger.info("正在重启程序...")
-            # 清理资源
-            observer.stop()
-            try:
-                import multiprocessing.resource_tracker
-                multiprocessing.resource_tracker._resource_tracker.clear()
-            except Exception as e:
-                logger.warning(f"清理资源时出错: {e}")
-            # 重启程序
-            os.execv(sys.executable, [sys.executable] + sys.argv)
-
-        handler.restart_callback = restart_program
-        observer.schedule(handler, str(config_path.parent), recursive=False)
-        observer.schedule(handler, str(plugins_path), recursive=True)
-        observer.start()
-
-        try:
-            await bot_core()
-        except KeyboardInterrupt:
-            logger.info("收到终止信号，正在关闭...")
-            observer.stop()
-            observer.join()
-        except Exception as e:
-            logger.error(f"程序发生错误: {e}")
-            logger.error(traceback.format_exc())
-            logger.info("等待文件改变后自动重启...")
-            handler.waiting_for_change = True
-
-            while handler.waiting_for_change:
-                await asyncio.sleep(1)
-    else:
-        # 直接运行主程序，不启用监控
-        try:
-            await bot_core()
-        except KeyboardInterrupt:
-            logger.info("收到终止信号，正在关闭...")
-        except Exception as e:
-            logger.error(f"发生错误: {e}")
-            logger.error(traceback.format_exc())
+    except KeyboardInterrupt:
+        logger.info("程序正在关闭...")
+    except Exception as e:
+        logger.error("发生错误: {}", str(e))
+        logger.exception(e)
+    finally:
+        logger.info("程序已关闭")
 
 
 if __name__ == "__main__":
@@ -110,8 +92,6 @@ if __name__ == "__main__":
     if sys.version_info.major != 3 and sys.version_info.minor != 11:
         print("请使用Python3.11")
         sys.exit(1)
-
-    logger.remove()
 
     logger.level("API", no=1, color="<cyan>")
 

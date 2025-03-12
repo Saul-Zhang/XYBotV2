@@ -536,6 +536,25 @@ class XYBotDB(metaclass=Singleton):
             return False
         finally:
             session.close()
+
+    def get_all_users(self) -> list[User]:
+        """获取所有用户信息"""
+        session = self.DBSession()
+        try:
+            users = session.query(User).all()
+            return users
+        finally:
+            session.close()
+
+    def get_all_chatrooms(self) -> list[Chatroom]:
+        """获取所有群聊信息"""
+        session = self.DBSession()
+        try:
+            chatrooms = session.query(Chatroom).all()
+            return chatrooms
+        finally:
+            session.close()
+
     def __del__(self):
         """确保关闭时清理资源"""
         if hasattr(self, 'executor'):
