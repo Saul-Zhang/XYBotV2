@@ -13,9 +13,7 @@ class ContactManager:
 
     async def fetch_and_save_contacts(self, bot: WechatAPIClient):
         """获取联系人信息并保存到数据库"""
-        start_time = datetime.now()
-        logger.info("开始获取通讯录信息时间：{}", start_time)
-
+        logger.info("开始获取通讯录信息")
         id_list = []
         wx_seq, chatroom_seq = 0, 0
         while True:
@@ -27,14 +25,12 @@ class ContactManager:
             if contact_list["CountinueFlag"] != 1:
                 break
 
-        get_list_time = datetime.now()
-        logger.info("获取通讯录信息列表耗时：{}", get_list_time - start_time)
-
         # 使用协程池处理联系人信息获取
         info_list = []
 
         async def fetch_contacts(id_chunk):
             contact_info = await bot.get_contact(id_chunk)
+            logger.info("获取通讯录信息：{}", contact_info)
             return contact_info
 
         chunks = [id_list[i:i + 20] for i in range(0, len(id_list), 20)]
@@ -51,11 +47,8 @@ class ContactManager:
         for result in results:
             info_list.extend(result)
 
-        done_time = datetime.now()
-        logger.info("获取通讯录详细信息耗时：{}", done_time - get_list_time)
-        logger.info("获取通讯录信息总耗时：{}", done_time - start_time)
-
         clean_info = []
+        logger.info("获取通讯录完整信息列表：{}", info_list)
         for info in info_list:
             if info.get("UserName", {}).get("string", ""):
                 clean_info.append({
@@ -75,5 +68,5 @@ class ContactManager:
                 big_head_img_url=contact["BigHeadImgUrl"]
             )
             self.db.save_or_update_contact(user)
-        
+        logger.success("保存联系人信息完成")
         return clean_info 
