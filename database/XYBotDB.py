@@ -42,6 +42,8 @@ class Chatroom(Base):
     llm_thread_id = Column(JSON, nullable=False, default=lambda: {}, comment='llm_thread_id')
     member_count = Column(Integer, nullable=False, default=0, comment='member_count')
     small_head_img_url = Column(String(255), nullable=False, default="", comment='small_head_img_url')
+    ai_enabled = Column(Boolean, nullable=False, default=False, comment='ai_enabled')
+    
 class OfficialAccount(Base):
     __tablename__ = 'official_account'
 
@@ -149,6 +151,13 @@ class XYBotDB(metaclass=Singleton):
             session.rollback()
             logger.error(f"数据库: 保存或更新联系人{user.wxid}失败, 错误: {e}")
             return False
+        finally:
+            session.close()
+    def get_user_by_wxid(self, wxid: str) -> User:
+        """获取联系人信息"""
+        session = self.DBSession()
+        try:
+            return session.query(User).filter_by(wxid=wxid).first()
         finally:
             session.close()
     def save_or_update_official_account(self, official_account: OfficialAccount) -> bool:
@@ -560,6 +569,15 @@ class XYBotDB(metaclass=Singleton):
             return False
         finally:
             session.close()
+
+    def get_chatroom_by_wxid(self, wxid: str) -> Chatroom:
+        """获取群聊信息"""
+        session = self.DBSession()
+        try:
+            return session.query(Chatroom).filter_by(chatroom_id=wxid).first()
+        finally:
+            session.close()
+
 
     # CONFIG
     def get_config(self, plugin_name: str) -> dict:
