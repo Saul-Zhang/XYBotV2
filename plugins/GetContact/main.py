@@ -24,20 +24,6 @@ class GetContact(PluginBase):
         config = self.db.get_config("GetContact")
         self.enable = config.get("enable", False)
         self.command = config.get("command", ["获取联系人"])
-        
-        # 从主配置获取WechatAPI服务器配置
-        with open("main_config.toml", "rb") as f:
-            main_config = tomllib.load(f)
-        api_config = main_config.get("WechatAPIServer", {})
-        
-        # 创建WechatAPIClient实例
-        self.bot = WechatAPIClient(
-            ip=api_config.get("host", "127.0.0.1"),
-            port=api_config.get("port", 9000)
-        )
-        
-        # 异步初始化联系人
-        asyncio.create_task(self.fetch_and_save_contacts(self.bot))
 
         # with open("plugins/GetContact/config.toml", "rb") as f:
         #     plugin_config = tomllib.load(f)

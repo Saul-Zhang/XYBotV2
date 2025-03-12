@@ -14,6 +14,7 @@ from database.messsagDB import MessageDB
 from utils.decorators import scheduler
 from utils.plugin_manager import plugin_manager
 from utils.xybot import XYBot
+from utils.contact_manager import ContactManager
 
 
 async def bot_core():
@@ -175,6 +176,15 @@ async def bot_core():
 
     keyval_db = KeyvalDB()
     await keyval_db.initialize()
+
+    # 初始化联系人管理器并获取联系人信息
+    contact_manager = ContactManager()
+    try:
+        logger.info("开始获取联系人信息")
+        await contact_manager.fetch_and_save_contacts(bot)
+        logger.success("联系人信息获取完成")
+    except Exception as e:
+        logger.error("获取联系人信息失败: {}", e)
 
     # 启动调度器
     scheduler.start()
