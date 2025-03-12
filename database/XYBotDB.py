@@ -120,21 +120,20 @@ class XYBotDB(metaclass=Singleton):
         """保存或更新联系人信息"""
         session = self.DBSession()
         try:
-            user = session.query(User).filter_by(wxid=user.wxid).first()
-            if not user:
+            existing_user = session.query(User).filter_by(wxid=user.wxid).first()
+            if not existing_user:
                 session.add(user)
             else:
-                user.nickname = user.nickname
-                user.remark = user.remark
-                # user.whitelist = user.whitelist
-                user.big_head_img_url = user.big_head_img_url
-                # user.ai_enabled = user.ai_enabled
+                existing_user.nickname = user.nickname
+                existing_user.remark = user.remark
+                existing_user.wx_num = user.wx_num
+                existing_user.big_head_img_url = user.big_head_img_url
             session.commit()
             logger.info(f"数据库: 成功保存或更新联系人{user.nickname}")
             return True
         except Exception as e:
             session.rollback()
-            logger.error(f"数据库: 保存或更新联系人{user.nickname}失败, 错误: {e}")
+            logger.error(f"数据库: 保存或更新联系人{user.wxid}失败, 错误: {e}")
             return False
         finally:
             session.close()

@@ -96,15 +96,22 @@ class ContactManager:
             saved_count = 0
             for contact in clean_info:
                 try:
+                    # 确保所有字段都有默认值
                     user = User(
                         wxid=contact["Wxid"],
-                        nickname=contact["Nickname"],
-                        remark=contact["Remark"],
-                        wx_num=contact["Alias"],
-                        big_head_img_url=contact["BigHeadImgUrl"]
+                        nickname=contact["Nickname"] or "未知昵称",  # 提供默认值
+                        remark=contact["Remark"] or "",
+                        wx_num=contact["Alias"] or "",
+                        big_head_img_url=contact["BigHeadImgUrl"] or "",
+                        points=0,  # 设置默认值
+                        whitelist=False,  # 设置默认值
+                        ai_enabled=False,  # 设置默认值
+                        signin_streak=0  # 设置默认值
                     )
-                    self.db.save_or_update_contact(user)
-                    saved_count += 1
+                    if self.db.save_or_update_contact(user):
+                        saved_count += 1
+                    else:
+                        logger.warning(f"保存联系人 {contact['Wxid']} 失败")
                 except Exception as e:
                     logger.error("保存联系人信息失败: {} - {}", contact["Wxid"], str(e))
 
