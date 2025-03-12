@@ -169,7 +169,9 @@ async def bot_core():
     xybot.update_profile(bot.wxid, bot.nickname, bot.alias, bot.phone)
 
     # 初始化数据库
-    XYBotDB()
+    logger.info("初始化数据库")
+    db = XYBotDB()
+    await db.initialize()  # 确保数据库表已创建
 
     message_db = MessageDB()
     await message_db.initialize()
@@ -184,7 +186,8 @@ async def bot_core():
         await contact_manager.fetch_and_save_contacts(bot)
         logger.success("联系人信息获取完成")
     except Exception as e:
-        logger.error("获取联系人信息失败: {}", e)
+        logger.error("获取联系人信息失败: {}", str(e))
+        logger.exception(e)  # 打印完整的错误堆栈
 
     # 启动调度器
     scheduler.start()
