@@ -3,7 +3,7 @@ from datetime import datetime
 
 from loguru import logger
 
-from database.XYBotDB import XYBotDB, User
+from database.XYBotDB import Chatroom, OfficialAccount, XYBotDB, User
 from WechatAPI.Client import WechatAPIClient
 
 
@@ -55,7 +55,7 @@ class ContactManager:
             async def worker(chunk):
                 async with sem:
                     if chunk:  # 确保chunk不为空
-                        return await fetch_contacts(chunk[:-1])
+                        return await fetch_contacts(chunk)
                     return []
 
             tasks = [worker(chunk) for chunk in chunks if chunk]
@@ -82,42 +82,68 @@ class ContactManager:
 
                 nickname = info.get("NickName", {})
                 remark = info.get("Remark", {})
+
+                new_chatroom_data = info.get("NewChatroomData", {})
+                if new_chatroom_data:
+                    member_count = new_chatroom_data.get("MemberCount", 0)
+    
                 
                 contact_info = {
                     "Wxid": wxid,
                     "Nickname": nickname.get("string", "") if isinstance(nickname, dict) else "",
                     "Remark": remark.get("string", "") if isinstance(remark, dict) else "",
                     "Alias": info.get("Alias", ""),
-                    "BigHeadImgUrl": info.get("BigHeadImgUrl", "")
+                    "SmallHeadImgUrl": info.get("SmallHeadImgUrl", ""),
+                    "MemberCount": member_count
                 }
                 clean_info.append(contact_info)
 
             # 保存联系人信息到数据库
-            saved_count = 0
+            user_count = 0
+            chatroom_count = 0
+            official_account_count = 0
             for contact in clean_info:
-                try:
-                    # 确保所有字段都有默认值
-                    user = User(
+                if contact["Wxid"].endswith("@chatroom"):
+                    chatroom = Chatroom(
                         wxid=contact["Wxid"],
-                        nickname=contact["Nickname"] or "未知昵称",  # 提供默认值
-                        remark=contact["Remark"] or "",
-                        wx_num=contact["Alias"] or "",
-                        big_head_img_url=contact["BigHeadImgUrl"] or "",
-                        points=0,  # 设置默认值
-                        whitelist=False,  # 设置默认值
-                        ai_enabled=False,  # 设置默认值
-                        signin_streak=0  # 设置默认值
+                        name=contact["Nickname"],
+                        member_count=contact["MemberCount"],
+                        small_head_img_url=contact["SmallHeadImgUrl"]
                     )
-                    if self.db.save_or_update_contact(user):
-                        saved_count += 1
-                    else:
-                        logger.warning(f"保存联系人 {contact['Wxid']} 失败")
-                except Exception as e:
-                    logger.error("保存联系人信息失败: {} - {}", contact["Wxid"], str(e))
+                    if self.db.save_or_update_chatroom(chatroom):
+                        chatroom_count += 1
+                elif contact["Wxid"].startswith("gh_"):
+                    official_account = OfficialAccount(
+                        wxid=contact["Wxid"],
+                        name=contact["Nickname"],
+                        small_head_img_url=contact["SmallHeadImgUrl"]
+                    )
+                    if self.db.save_or_update_official_account(official_account):
+                        official_account_count += 1
+                else:
+                    try:
+                            # 确保所有字段都有默认值
+                        user = User(
+                            wxid=contact["Wxid"],
+                            nickname=contact["Nickname"] or "未知昵称",  # 提供默认值
+                            remark=contact["Remark"] or "",
+                            wx_num=contact["Alias"] or "",
+                            big_head_img_url=contact["SmallHeadImgUrl"] or "",
+                            points=0,  # 设置默认值
+                            whitelist=False,  # 设置默认值
+                            ai_enabled=False,  # 设置默认值
+                            signin_streak=0  # 设置默认值
+                        )
+                        if self.db.save_or_update_contact(user):
+                            user_count += 1
+                        else:
+                            logger.warning(f"保存联系人 {contact['Wxid']} 失败")
+                    except Exception as e:
+                        logger.error("保存联系人信息失败: {} - {}", contact["Wxid"], str(e))
 
             done_time = datetime.now()
-            logger.info("获取通讯录信息完成，共处理 {} 个联系人，成功保存 {} 个，耗时：{}", 
-                       len(clean_info), saved_count, done_time - start_time)
+            logger.info("获取通讯录信息完成，共处理 {} 个联系人，成功保存 {} 个联系人，{} 个群聊，{} 个公众号，耗时：{}", 
+                       len(clean_info), user_count, chatroom_count, official_account_count, done_time - start_time)
             
             return clean_info
 

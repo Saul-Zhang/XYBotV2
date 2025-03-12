@@ -28,6 +28,7 @@ class User(Base):
     llm_thread_id = Column(JSON, nullable=False, default=lambda: {}, comment='llm_thread_id')
     nickname = Column(String(50), nullable=False, default="", comment='nickname')
     big_head_img_url = Column(String(255), nullable=False, default="", comment='big_head_img_url')
+    small_head_img_url = Column(String(255), nullable=False, default="", comment='small_head_img_url')
     remark = Column(String(255), nullable=False, default="", comment='remark')
     ai_enabled = Column(Boolean, nullable=False, default=False, comment='ai_enabled')
 
@@ -39,6 +40,19 @@ class Chatroom(Base):
                          comment='chatroom_id')
     members = Column(JSON, nullable=False, default=list, comment='members')
     llm_thread_id = Column(JSON, nullable=False, default=lambda: {}, comment='llm_thread_id')
+    member_count = Column(Integer, nullable=False, default=0, comment='member_count')
+    small_head_img_url = Column(String(255), nullable=False, default="", comment='small_head_img_url')
+class OfficialAccount(Base):
+    __tablename__ = 'official_account'
+
+    wxid = Column(String(20), primary_key=True, nullable=False, unique=True, index=True, autoincrement=False,
+                  comment='wxid')
+    name = Column(String(50), nullable=False, default="", comment='name')
+    small_head_img_url = Column(String(255), nullable=False, default="", comment='small_head_img_url')
+    last_message = Column(String(255), nullable=False, default="", comment='last_message')
+    last_message_time = Column(DateTime, nullable=False, default=datetime.datetime.fromtimestamp(0), comment='last_message_time')
+    need_real_time = Column(Boolean, nullable=False, default=False, comment='need_real_time')
+    fake_id = Column(String(255), nullable=False, default="", comment='fake_id')
 
 class Config(Base):
     __tablename__ = 'config'
@@ -137,7 +151,46 @@ class XYBotDB(metaclass=Singleton):
             return False
         finally:
             session.close()
-        
+    def save_or_update_official_account(self, official_account: OfficialAccount) -> bool:
+        """保存或更新公众号信息"""
+        session = self.DBSession()
+        try:
+            existing_official_account = session.query(OfficialAccount).filter_by(wxid=official_account.wxid).first()
+            if not existing_official_account:
+                session.add(official_account)
+            else:
+                existing_official_account.name = official_account.name
+                existing_official_account.small_head_img_url = official_account.small_head_img_url
+            session.commit()
+            logger.info(f"数据库: 成功保存或更新公众号{official_account.name}")
+            return True
+        except Exception as e:
+            session.rollback()
+            logger.error(f"数据库: 保存或更新公众号{official_account.wxid}失败, 错误: {e}")
+            return False
+        finally:
+            session.close()
+
+    def save_or_update_chatroom(self, chatroom: Chatroom) -> bool:
+        """保存或更新群聊信息"""
+        session = self.DBSession()
+        try:
+            existing_chatroom = session.query(Chatroom).filter_by(chatroom_id=chatroom.chatroom_id).first()
+            if not existing_chatroom:
+                session.add(chatroom)
+            else:
+                existing_chatroom.members = chatroom.members    
+                existing_chatroom.member_count = chatroom.member_count
+                existing_chatroom.small_head_img_url = chatroom.small_head_img_url
+            session.commit()
+            logger.info(f"数据库: 成功保存或更新群聊{chatroom.name}")
+            return True
+        except Exception as e:
+            session.rollback()
+            logger.error(f"数据库: 保存或更新群聊{chatroom.chatroom_id}失败, 错误: {e}")
+            return False
+        finally:
+            session.close()
 
     def add_points(self, wxid: str, num: int) -> bool:
         """Thread-safe point addition"""
