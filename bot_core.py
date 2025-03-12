@@ -170,12 +170,13 @@ async def bot_core():
 
     # 初始化数据库
     logger.info("初始化数据库")
-    db = XYBotDB()
-    await db.initialize()  # 确保数据库表已创建
+    db = XYBotDB()  # XYBotDB在__init__中自动初始化
 
+    logger.info("初始化消息数据库")
     message_db = MessageDB()
     await message_db.initialize()
 
+    logger.info("初始化键值数据库")
     keyval_db = KeyvalDB()
     await keyval_db.initialize()
 
