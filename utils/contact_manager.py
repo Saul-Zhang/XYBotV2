@@ -113,7 +113,7 @@ class ContactManager:
                     )
                     if self.db.save_or_update_chatroom(chatroom):
                         chatroom_count += 1
-                elif contact["Wxid"].startswith("gh_") or contact["PersonalCard"] ==0:
+                elif contact["Wxid"].startswith("gh_") or contact["Wxid"] == 'wxid_pzhf43hmwizd11':
                     official_account = OfficialAccount(
                         wxid=contact["Wxid"],
                         name=contact["Nickname"],
