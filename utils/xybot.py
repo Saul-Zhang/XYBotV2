@@ -457,11 +457,9 @@ class XYBot:
                     message["SenderWxid"],
                     title)
 
-        if self.ignore_check(message["FromWxid"], message["SenderWxid"]):
-            if self.ignore_protection or not protector.check(14400):
-                await EventManager.emit("official_account_message", self.bot, message)
-            else:
-                logger.warning("风控保护: 新设备登录后4小时内请挂机")
+
+        await EventManager.emit("official_account_message", self.bot, message)
+
 
     async def process_video_message(self, message):
         # 预处理消息

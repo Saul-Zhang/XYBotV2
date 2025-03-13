@@ -18,8 +18,8 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = 'user'
 
-    wxid = Column(String(20), primary_key=True, nullable=False, unique=True, index=True, autoincrement=False,
-                  comment='wxid')
+    id = Column(Integer, primary_key=True, autoincrement=True, comment='id')
+    wxid = Column(String(20), nullable=False, unique=True, index=True, comment='wxid')
     wx_num = Column(String(20), nullable=False, default="", comment='wx_num')
     points = Column(Integer, nullable=False, default=0, comment='points')
     signin_stat = Column(DateTime, nullable=False, default=datetime.datetime.fromtimestamp(0), comment='signin_stat')
@@ -36,7 +36,8 @@ class User(Base):
 class Chatroom(Base):
     __tablename__ = 'chatroom'
 
-    chatroom_id = Column(String(20), primary_key=True, nullable=False, unique=True, index=True, autoincrement=False,
+    id = Column(Integer, primary_key=True, autoincrement=True, comment='id')
+    chatroom_id = Column(String(20),  nullable=False, unique=True, index=True,
                          comment='chatroom_id')
     members = Column(JSON, nullable=False, default=list, comment='members')
     llm_thread_id = Column(JSON, nullable=False, default=lambda: {}, comment='llm_thread_id')
@@ -47,7 +48,8 @@ class Chatroom(Base):
 class OfficialAccount(Base):
     __tablename__ = 'official_account'
 
-    wxid = Column(String(20), primary_key=True, nullable=False, unique=True, index=True, autoincrement=False,
+    id = Column(Integer, primary_key=True, autoincrement=True, comment='id')
+    wxid = Column(String(20), nullable=False, unique=True, index=True,
                   comment='wxid')
     name = Column(String(50), nullable=False, default="", comment='name')
     small_head_img_url = Column(String(255), nullable=False, default="", comment='small_head_img_url')

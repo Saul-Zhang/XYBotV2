@@ -158,10 +158,14 @@ def on_official_account_message(priority=50):
     def decorator(func):
         if callable(priority):
             f = priority
-            setattr(f, '_event_type', 'office_account_message')
+            setattr(f, '_event_type', 'official_account_message')
             setattr(f, '_priority', 50)
             return f
-        setattr(func, '_event_type', 'office_account_message')
+        setattr(func, '_event_type', 'official_account_message')
+        setattr(func, '_priority', min(max(priority, 0), 99))
+        return func
+
+    return decorator if not callable(priority) else decorator(priority)
 
 def on_video_message(priority=50):
     """视频消息装饰器"""
