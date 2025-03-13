@@ -5,7 +5,7 @@ from WechatAPI import WechatAPIClient
 from database.XYBotDB import XYBotDB
 from utils.decorators import *
 from utils.plugin_base import PluginBase
-
+from loguru import logger
 
 class OfficalAccountSubscribe(PluginBase):
     description = "公众号订阅"
@@ -25,10 +25,14 @@ class OfficalAccountSubscribe(PluginBase):
     async def on_official_account_message(self, bot: WechatAPIClient, message: dict):
         if message["FromUserName"].endswith("@chatroom"):
             return
+        logger.debug("准备转发公众号消息")
         official_account = self.db.get_official_account_by_wxid(message["FromUserName"])
+        logger.debug("公众号信息：{}", official_account)
         if official_account:
             subscriptions = self.db.get_subscription_user(official_account.wxid)
             xml = self.parse_xml_to_appmsg(message["Content"])
+            logger.debug("转发的公众号消息：{}", xml)
+            logger.debug("公众号订阅用户：{}", subscriptions)
             for subscription in subscriptions:
                 await bot.send_app_message(subscription.user_wxid, xml, 0)
 
