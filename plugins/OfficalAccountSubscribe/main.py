@@ -1,12 +1,10 @@
-import tomllib
-from datetime import datetime
 import xml.etree.ElementTree as ET
+from urllib.parse import urlparse, parse_qs, urlencode
 
 from WechatAPI import WechatAPIClient
 from database.XYBotDB import XYBotDB
 from utils.decorators import *
 from utils.plugin_base import PluginBase
-from urllib.parse import urlparse, parse_qs, urlencode
 
 
 class OfficalAccountSubscribe(PluginBase):
@@ -25,15 +23,16 @@ class OfficalAccountSubscribe(PluginBase):
 
     @on_official_account_message()
     async def on_official_account_message(self, bot: WechatAPIClient, message: dict):
-
+        if message["FromUserName"].endswith("@chatroom"):
+            return
         official_account = self.db.get_official_account_by_wxid(message["FromUserName"])
         if official_account:
             subscriptions = self.db.get_subscription_user(official_account.wxid)
             xml = self.parse_xml_to_appmsg(message["Content"])
             for subscription in subscriptions:
-                    bot.send_app_message(subscription.user_wxid, xml, 0)
+                await bot.send_app_message(subscription.user_wxid, xml, 0)
 
-    def parse_xml_to_appmsg(xml_str):
+    def parse_xml_to_appmsg(self, xml_str):
         # 解析XML
         root = ET.fromstring(xml_str)
         appmsg = root.find('appmsg')

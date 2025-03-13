@@ -94,7 +94,8 @@ class ContactManager:
                     "Remark": remark.get("string", "") if isinstance(remark, dict) else "",
                     "Alias": info.get("Alias", ""),
                     "SmallHeadImgUrl": info.get("SmallHeadImgUrl", ""),
-                    "MemberCount": member_count
+                    "MemberCount": member_count,
+                    "PersonalCard": info.get("PersonalCard", -1)
                 }
                 clean_info.append(contact_info)
 
@@ -112,7 +113,7 @@ class ContactManager:
                     )
                     if self.db.save_or_update_chatroom(chatroom):
                         chatroom_count += 1
-                elif contact["Wxid"].startswith("gh_"):
+                elif contact["Wxid"].startswith("gh_") or contact["PersonalCard"] ==0:
                     official_account = OfficialAccount(
                         wxid=contact["Wxid"],
                         name=contact["Nickname"],
