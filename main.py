@@ -55,7 +55,7 @@ async def main():
         logger.add(
             sys.stdout,
             format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <level>{message}</level>",
-            level="INFO"
+            level="DEBUG"
         )
         logger.add(
             "logs/error.log",
