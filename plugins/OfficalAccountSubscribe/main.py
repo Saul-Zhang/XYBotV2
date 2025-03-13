@@ -2,7 +2,7 @@ import xml.etree.ElementTree as ET
 from urllib.parse import urlparse, parse_qs, urlencode
 
 from WechatAPI import WechatAPIClient
-from database.XYBotDB import XYBotDB
+from database.XYBotDB import Chatroom, OfficialAccount, XYBotDB
 from utils.decorators import *
 from utils.plugin_base import PluginBase
 from loguru import logger
@@ -89,3 +89,40 @@ class OfficalAccountSubscribe(PluginBase):
                 </appmsg>'''.replace('\n', '')  # 移除换行符保持紧凑
 
         return new_xml
+    
+    @on_text_message
+    async def on_text_message(self, bot: WechatAPIClient, message: dict):
+        if not self.enable:
+            logger.info("插件未启用，跳过处理")
+            return
+            
+        if message["FromWxid"].endswith("@chatroom"):
+            chatroom = self.db.get_chatroom_by_wxid(message["FromWxid"])
+            if chatroom:
+                return
+            else:
+                contact_info = await bot.get_contact(message["FromWxid"])   
+                if contact_info:
+                    chatroom = Chatroom(
+                        chatroom_id=message["FromWxid"],
+                        name=contact_info.get("NickName", {}).get("string", ""),
+                        small_head_img_url=contact_info.get("SmallHeadImgUrl", ""),
+                        member_count=contact_info.get("MemberCount", 0),
+                    )
+                    self.db.save_or_update_chatroom(chatroom)
+        elif message["FromWxid"].startswith("gh_"):
+            official_account = self.db.get_official_account_by_wxid(message["FromWxid"])
+            if official_account:
+                return
+            else:
+                contact_info = await bot.get_contact(message["FromWxid"])
+                if contact_info:
+                    official_account = OfficialAccount(
+                        wxid=contact_info.get("UserName", {}).get("string", ""),
+                        name=contact_info.get("NickName", {}).get("string", ""),
+                        small_head_img_url=contact_info.get("SmallHeadImgUrl", ""),
+                        fake_id=""
+                    )
+                    self.db.save_or_update_official_account(official_account)
+        else:
+            return

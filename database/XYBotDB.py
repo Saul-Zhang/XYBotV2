@@ -52,11 +52,11 @@ class OfficialAccount(Base):
     wxid = Column(String(20), nullable=False, unique=True, index=True,
                   comment='wxid')
     name = Column(String(50), nullable=False, default="", comment='name')
-    small_head_img_url = Column(String(255), nullable=False, default="", comment='small_head_img_url')
-    last_message = Column(String(255), nullable=False, default="", comment='last_message')
-    last_message_time = Column(DateTime, nullable=False, default=datetime.datetime.fromtimestamp(0), comment='last_message_time')
-    need_real_time = Column(Boolean, nullable=False, default=False, comment='need_real_time')
-    fake_id = Column(String(255), nullable=False, default="", comment='fake_id')
+    small_head_img_url = Column(String(255), nullable=True, default="", comment='small_head_img_url')
+    last_message = Column(String(255), nullable=True, default="", comment='last_message')
+    last_message_time = Column(DateTime, nullable=True, default=datetime.datetime.fromtimestamp(0), comment='last_message_time')
+    need_real_time = Column(Boolean, nullable=True, default=False, comment='need_real_time')
+    fake_id = Column(String(255), nullable=True, default="", comment='fake_id')
 
 class Subscription(Base):
     __tablename__ = 'subscription'
