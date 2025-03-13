@@ -15,19 +15,30 @@ class OfficalAccountSubscribe(PluginBase):
     def __init__(self):
         super().__init__()
 
-        # self.enable = config["enable"]
-        # self.command = config["command"]
-        # self.command_format = config["command-format"]
-
         self.db = XYBotDB()
+        config = self.db.get_config("OfficalAccountSubscribe")
+        self.enable = config.get("enable", True)
+        self.command = config.get("command", ["订阅公众号", "取消订阅公众号", "公众号列表"])
+        self.command_format = config.get("command-format", "订阅公众号 [公众号ID]")
+
+        logger.info("OfficalAccountSubscribe插件初始化完成，enable={}, command={}", self.enable, self.command)
 
     @on_official_account_message
     async def on_official_account_message(self, bot: WechatAPIClient, message: dict):
-        logger.debug("准备转发公众号消息")
-        if message["FromWxid"].endswith("@chatroom"):
+        logger.info("收到公众号消息事件，开始处理")
+        logger.debug("消息内容：{}", message)
+        
+        if not self.enable:
+            logger.info("插件未启用，跳过处理")
             return
+            
+        if message["FromWxid"].endswith("@chatroom"):
+            logger.info("群聊消息，跳过处理")
+            return
+            
         official_account = self.db.get_official_account_by_wxid(message["FromWxid"])
         logger.debug("公众号信息：{}", official_account)
+        
         if official_account:
             subscriptions = self.db.get_subscription_user(official_account.wxid)
             xml = self.parse_xml_to_appmsg(message["Content"])
@@ -35,6 +46,8 @@ class OfficalAccountSubscribe(PluginBase):
             logger.debug("公众号订阅用户：{}", subscriptions)
             for subscription in subscriptions:
                 await bot.send_app_message(subscription.user_wxid, xml, 0)
+        else:
+            logger.info("未找到对应的公众号信息：{}", message["FromWxid"])
 
     def parse_xml_to_appmsg(self, xml_str):
         # 解析XML
