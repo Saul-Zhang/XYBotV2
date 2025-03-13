@@ -21,12 +21,12 @@ class OfficalAccountSubscribe(PluginBase):
 
         self.db = XYBotDB()
 
-    @on_official_account_message()
+    @on_official_account_message
     async def on_official_account_message(self, bot: WechatAPIClient, message: dict):
-        if message["FromUserName"].endswith("@chatroom"):
-            return
         logger.debug("准备转发公众号消息")
-        official_account = self.db.get_official_account_by_wxid(message["FromUserName"])
+        if message["FromWxid"].endswith("@chatroom"):
+            return
+        official_account = self.db.get_official_account_by_wxid(message["FromWxid"])
         logger.debug("公众号信息：{}", official_account)
         if official_account:
             subscriptions = self.db.get_subscription_user(official_account.wxid)
