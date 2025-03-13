@@ -153,6 +153,15 @@ def on_quote_message(priority=50):
 
     return decorator if not callable(priority) else decorator(priority)
 
+def on_official_account_message(priority=50):
+    """公众号消息装饰器"""
+    def decorator(func):
+        if callable(priority):
+            f = priority
+            setattr(f, '_event_type', 'office_account_message')
+            setattr(f, '_priority', 50)
+            return f
+        setattr(func, '_event_type', 'office_account_message')
 
 def on_video_message(priority=50):
     """视频消息装饰器"""

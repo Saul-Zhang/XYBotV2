@@ -56,6 +56,13 @@ class OfficialAccount(Base):
     need_real_time = Column(Boolean, nullable=False, default=False, comment='need_real_time')
     fake_id = Column(String(255), nullable=False, default="", comment='fake_id')
 
+class Subscription(Base):
+    __tablename__ = 'subscription'
+    id = Column(Integer, primary_key=True, autoincrement=True, comment='订阅ID')
+    user_wxid = Column(String(20), nullable=False, index=True, autoincrement=False, comment='wxid')
+    gh_wxid = Column(String(50), nullable=False, default="", comment='gh_wxid')
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now, comment='created_at')
+
 class Config(Base):
     __tablename__ = 'config'
 
@@ -143,7 +150,7 @@ class XYBotDB(metaclass=Singleton):
                 existing_user.nickname = user.nickname
                 existing_user.remark = user.remark
                 existing_user.wx_num = user.wx_num
-                existing_user.big_head_img_url = user.big_head_img_url
+                existing_user.small_head_img_url = user.small_head_img_url
             session.commit()
             logger.info(f"数据库: 成功保存或更新联系人{user.nickname}")
             return True
@@ -626,6 +633,37 @@ class XYBotDB(metaclass=Singleton):
         finally:
             session.close()
 
+    # OfficialAccount
+    def get_official_account_by_wxid(self, wxid: str) -> OfficialAccount:
+        """获取公众号信息"""
+        session = self.DBSession()
+        try:
+            return session.query(OfficialAccount).filter_by(wxid=wxid).first()
+        finally:
+            session.close()
+    
+    def update_official_account(self, official_account: OfficialAccount) -> bool:
+        """更新公众号信息"""
+        session = self.DBSession()
+        try:
+            session.merge(official_account)
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            logger.error(f"数据库: 更新公众号信息失败, 错误: {e}")
+            return False
+        finally:
+            session.close()
+
+    def get_subscription_user(self, gh_wxid: str) -> list[Subscription]:
+        """获取订阅用户"""
+        session = self.DBSession()
+        try:
+            return session.query(Subscription).filter_by(gh_wxid=gh_wxid).all()
+        finally:
+            session.close()
+        
     def __del__(self):
         """确保关闭时清理资源"""
         if hasattr(self, 'executor'):

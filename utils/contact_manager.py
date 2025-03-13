@@ -128,7 +128,7 @@ class ContactManager:
                             nickname=contact["Nickname"] or "未知昵称",  # 提供默认值
                             remark=contact["Remark"] or "",
                             wx_num=contact["Alias"] or "",
-                            big_head_img_url=contact["SmallHeadImgUrl"] or "",
+                            small_head_img_url=contact["SmallHeadImgUrl"] or "",
                             points=0,  # 设置默认值
                             whitelist=False,  # 设置默认值
                             ai_enabled=False,  # 设置默认值

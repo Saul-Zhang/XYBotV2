@@ -7,7 +7,9 @@ from loguru import logger
 from WechatAPI import WechatAPIClient
 from WechatAPI.Client.protect import protector
 from database.messsagDB import MessageDB
+from database.XYBotDB import XYBotDB
 from utils.event_manager import EventManager
+
 
 
 class XYBot:
@@ -28,6 +30,7 @@ class XYBot:
         self.blacklist = main_config.get("XYBot", {}).get("blacklist", [])
 
         self.msg_db = MessageDB()
+        self.bot_db = XYBotDB()
 
 
     def update_profile(self, wxid: str, nickname: str, alias: str, phone: str):
@@ -318,8 +321,8 @@ class XYBot:
             await self.process_file_message(message)
         elif type == 74:  # 文件消息，但还在上传，不用管
             pass
-        elif type == 49:
-            await self.process_url_message(message)
+        elif type == 5:
+            await self.process_official_account_message(message)
         else:
             logger.info("未知的xml消息类型: {}", message)
 
@@ -445,6 +448,7 @@ class XYBot:
         
     async def process_official_account_message(self, message):
         """处理公众号消息"""
+
         root = ET.fromstring(message["Content"])
         title = root.find("appmsg").find("title").text
         logger.info("收到公众号消息: 消息ID:{} 来自:{} 发送人:{} 标题:{}",
@@ -452,6 +456,12 @@ class XYBot:
                     message["FromWxid"],
                     message["SenderWxid"],
                     title)
+
+        if self.ignore_check(message["FromWxid"], message["SenderWxid"]):
+            if self.ignore_protection or not protector.check(14400):
+                await EventManager.emit("official_account_message", self.bot, message)
+            else:
+                logger.warning("风控保护: 新设备登录后4小时内请挂机")
 
     async def process_video_message(self, message):
         # 预处理消息

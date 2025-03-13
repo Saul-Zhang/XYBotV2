@@ -1,7 +1,14 @@
+import os
+import sys
+from pathlib import Path
+
+# 将项目根目录添加到系统路径
+project_root = Path(__file__).parent.parent
+sys.path.append(str(project_root))
+
 from flask import Flask, render_template, jsonify, request, send_from_directory
 # from WechatAPI import WechatAPIClient
 import tomllib
-import os
 import asyncio
 from datetime import datetime
 from database.XYBotDB import XYBotDB
@@ -51,7 +58,8 @@ def get_contacts():
                 "nickname": user.nickname,
                 "remark": user.remark,
                 "wx_num": user.wx_num,
-                "avatar": user.big_head_img_url,
+                "avatar": user.small_head_img_url,
+                "ai_enabled": user.ai_enabled,
                 "type": "好友"
             })
     
@@ -62,7 +70,9 @@ def get_contacts():
         groups.append({
             "wxid": chatroom.chatroom_id,
             "nickname": chatroom.nickname if hasattr(chatroom, 'nickname') else "未知群聊",
+            "avatar": chatroom.small_head_img_url,
             "member_count": len(members) if members else 0,
+            "ai_enabled": chatroom.ai_enabled if hasattr(chatroom, 'ai_enabled') else False,
             "type": "群聊"
         })
     
@@ -119,6 +129,34 @@ def get_status():
             "message_count": 0,
             "error": str(e)
         })
+
+@app.route('/api/toggle_ai', methods=['POST'])
+def toggle_ai():
+    try:
+        data = request.json
+        wxid = data.get('wxid')
+        enabled = data.get('enabled')
+        
+        if not wxid:
+            return jsonify({"status": "error", "message": "Missing wxid"}), 400
+            
+        db = XYBotDB()
+        if wxid.endswith("@chatroom"):
+            # 群聊
+            chatroom = db.get_chatroom_by_wxid(wxid)
+            if chatroom:
+                chatroom.ai_enabled = enabled
+                db.save_or_update_chatroom(chatroom)
+        else:
+            # 好友
+            user = db.get_user_by_wxid(wxid)
+            if user:
+                user.ai_enabled = enabled
+                db.save_or_update_contact(user)
+                
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True) 

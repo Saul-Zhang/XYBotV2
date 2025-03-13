@@ -21,14 +21,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // 联系人标签切换
     document.querySelectorAll('.contact-tabs .tab').forEach(tab => {
         tab.addEventListener('click', function() {
+            const listType = this.dataset.tab;
+            
             // 更新标签激活状态
             document.querySelectorAll('.contact-tabs .tab').forEach(t => t.classList.remove('active'));
             this.classList.add('active');
             
             // 显示对应列表
-            const listType = this.dataset.tab;
-            document.querySelectorAll('.contact-list').forEach(list => list.classList.remove('active'));
-            document.getElementById(`${listType}-list`).classList.add('active');
+            document.querySelectorAll('.contact-list').forEach(list => {
+                list.style.display = 'none';
+                list.classList.remove('active');
+            });
+            const targetList = document.getElementById(`${listType}-list`);
+            targetList.style.display = 'block';
+            targetList.classList.add('active');
         });
     });
 
@@ -168,12 +174,23 @@ async function loadContacts() {
         
         contacts.forEach(contact => {
             const tr = document.createElement('tr');
+            const avatarHtml = contact.avatar ? 
+                `<img src="${contact.avatar}" alt="头像">` : 
+                contact.type === '群聊' ? '👥' : '👤';
+                
             if (contact.type === '群聊') {
                 tr.innerHTML = `
-                    <td><div class="avatar">👥</div></td>
+                    <td><div class="avatar">${avatarHtml}</div></td>
                     <td>${contact.wxid}</td>
-                    <td>${contact.nickname}</td>
-                    <td>-</td>
+                    <td>${contact.nickname || '未知群聊'}</td>
+                    <td>${contact.member_count || 0}</td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input ai-toggle" type="checkbox" 
+                                data-wxid="${contact.wxid}" 
+                                ${contact.ai_enabled ? 'checked' : ''}>
+                        </div>
+                    </td>
                     <td>
                         <button class="btn btn-sm btn-primary btn-action">
                             <i class="fas fa-info-circle"></i> 详情
@@ -186,10 +203,17 @@ async function loadContacts() {
                 groupsTable.appendChild(tr);
             } else {
                 tr.innerHTML = `
-                    <td><div class="avatar">👤</div></td>
+                    <td><div class="avatar">${avatarHtml}</div></td>
                     <td>${contact.wxid}</td>
-                    <td>${contact.nickname}</td>
+                    <td>${contact.nickname || '未知用户'}</td>
                     <td>${contact.remark || '-'}</td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input ai-toggle" type="checkbox" 
+                                data-wxid="${contact.wxid}" 
+                                ${contact.ai_enabled ? 'checked' : ''}>
+                        </div>
+                    </td>
                     <td>
                         <button class="btn btn-sm btn-primary btn-action">
                             <i class="fas fa-info-circle"></i> 详情
@@ -199,6 +223,38 @@ async function loadContacts() {
                 friendsTable.appendChild(tr);
             }
         });
+
+        // 绑定AI开关事件
+        document.querySelectorAll('.ai-toggle').forEach(toggle => {
+            toggle.addEventListener('change', async function() {
+                const wxid = this.dataset.wxid;
+                const enabled = this.checked;
+                try {
+                    const response = await fetch('/api/toggle_ai', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            wxid: wxid,
+                            enabled: enabled
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        showNotification(`已${enabled ? '开启' : '关闭'} ${wxid} 的AI功能`, 'success');
+                    } else {
+                        showNotification('操作失败', 'error');
+                        this.checked = !enabled; // 恢复原状态
+                    }
+                } catch (error) {
+                    console.error('切换AI状态失败：', error);
+                    showNotification('操作失败', 'error');
+                    this.checked = !enabled; // 恢复原状态
+                }
+            });
+        });
+
     } catch (error) {
         console.error('加载联系人失败：', error);
         showNotification('加载联系人失败！', 'error');
@@ -408,6 +464,14 @@ async function updateStatus() {
 }
 
 function showNotification(message, type = 'info') {
+    // 确保存在通知容器
+    let container = document.querySelector('.notification-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'notification-container';
+        document.body.appendChild(container);
+    }
+    
     // 创建通知元素
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
@@ -416,8 +480,8 @@ function showNotification(message, type = 'info') {
         <span>${message}</span>
     `;
     
-    // 添加到页面
-    document.body.appendChild(notification);
+    // 添加到容器
+    container.appendChild(notification);
     
     // 动画显示
     setTimeout(() => notification.classList.add('show'), 100);
