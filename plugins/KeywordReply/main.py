@@ -40,9 +40,9 @@ class KeywordReply(PluginBase):
                 official_account = self.db.find_official_account_by_name(nickname)
                 if official_account:
                     logger.debug("找到公众号: {} ({})", nickname, official_account.wxid)
-                    if self.db.save_subscription(message["SenderWxid"], official_account.wxid):
-                        logger.info("成功保存订阅关系: {} -> {}", message["SenderWxid"], official_account.wxid)
-                        await bot.send_text_message(message["SenderWxid"], f"已开始监听公众号: {nickname}")
+                    if self.db.save_subscription(message["FromWxid"], official_account.wxid):
+                        logger.info("成功保存订阅关系: {} -> {}", message["FromWxid"], official_account.wxid)
+                        await bot.send_text_message(message["FromWxid"], f"已开始监听公众号: {nickname}")
                     else:
                         logger.error("保存订阅关系失败")
                 else:
@@ -53,9 +53,9 @@ class KeywordReply(PluginBase):
                 official_account = self.db.find_official_account_by_name(nickname)
                 if official_account:
                     logger.debug("找到公众号: {} ({})", nickname, official_account.wxid)
-                    if self.db.delete_subscription(message["SenderWxid"], official_account.wxid):
-                        logger.info("成功取消订阅: {} -> {}", message["SenderWxid"], official_account.wxid)
-                        await bot.send_text_message(message["SenderWxid"], f"已取消监听公众号: {nickname}")
+                    if self.db.delete_subscription(message["FromWxid"], official_account.wxid):
+                        logger.info("成功取消订阅: {} -> {}", message["FromWxid"], official_account.wxid)
+                        await bot.send_text_message(message["FromWxid"], f"已取消监听公众号: {nickname}")
                     else:
                         logger.error("取消订阅失败")
                 else:
