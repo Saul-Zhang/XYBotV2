@@ -412,12 +412,14 @@ class XYBot:
                     quote_appmsg.find("statextstr"), ET.Element) else ""
                 quote_messsage["directshare"] = int(quote_appmsg.find("directshare").text) if isinstance(
                     quote_appmsg.find("directshare"), ET.Element) else 0
-            elif quote_messsage["MsgType"] == 42:  # (公众号)名片
-                    logger.debug("引用消息详情:\n标签: {}\n属性: {}\n文本: {}\n子元素: {}",
-                               refermsg.tag,
-                               refermsg.attrib,
-                               refermsg.text,
-                               [(child.tag, child.text) for child in refermsg])
+            elif quote_messsage["MsgType"] == 42:  # (公众号/个人)名片
+                quote_messsage["MsgType"] = 42
+                content_xml = refermsg.find("content").text
+                if content_xml:
+                    inner_root = ET.fromstring(content_xml)
+                    nickname = inner_root.get("nickname", "")
+                    quote_messsage["nickname"] = nickname
+    
                 
         except Exception as e:
             logger.error(f"解析引用消息失败: {e}")

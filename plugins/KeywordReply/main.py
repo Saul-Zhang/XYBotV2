@@ -2,7 +2,7 @@
 from loguru import logger
 from WechatAPI.Client import WechatAPIClient
 from database.XYBotDB import XYBotDB
-from utils.decorators import on_text_message
+from utils.decorators import on_quote_message, on_text_message
 from utils.finalshell_crack import FinalShellCrack
 from utils.plugin_base import PluginBase
 
@@ -29,4 +29,19 @@ class KeywordReply(PluginBase):
                 if k == message["Content"]:
                     await bot.send_text_message(message["FromWxid"], v)
                     break
+
+    @on_quote_message
+    async def handle_quote(self, bot: WechatAPIClient, message: dict):
+        logger.info("收到引用消息: {}", message)
+        if message["FromWxid"] == "wxid_a2tnuxvrhszz22" :
+            if message["Content"] == "1":
+                nickname = message["Quote"]["nickname"]
+                official_account = self.db.find_official_account_by_name(nickname)
+                if official_account:
+                    self.db.save_subscription(message["SenderWxid"], official_account["wxid"])
+            elif message["Content"] == "2":
+                nickname = message["Quote"]["nickname"]
+                official_account = self.db.find_official_account_by_name(nickname)
+                if official_account:
+                    self.db.delete_subscription(message["SenderWxid"], official_account["wxid"])
 

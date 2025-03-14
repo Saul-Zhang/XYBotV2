@@ -32,7 +32,19 @@ class FriendWelcome(PluginBase):
             return
 
         logger.info("收到添加好友请求: {}", message)
-        await bot.accept_friend_request(message["FromWxid"])
+        
+        try:
+            # Parse the XML content to get scene, v1, v2
+            root = ET.fromstring(message.get("Content", {}).get("string", ""))
+            scene = int(root.find(".//scene").text)
+            v1 = root.find(".//encryptusername").text
+            v2 = root.find(".//ticket").text
+            
+            # Accept the friend request with the parsed parameters
+            await bot.accept_friend(scene, v1, v2)
+            logger.info("已接受好友请求: scene={}, v1={}, v2={}", scene, v1, v2)
+        except Exception as e:
+            logger.error("处理好友请求失败: {}", str(e))
 
     @on_add_friend_success
     async def handle_add_friend_success(self, bot: WechatAPIClient, message: dict):

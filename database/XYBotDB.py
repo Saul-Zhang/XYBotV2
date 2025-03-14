@@ -687,6 +687,18 @@ class XYBotDB(metaclass=Singleton):
         finally:
             session.close()
 
+    def find_official_account_by_name(self, name: str) -> OfficialAccount:
+        """根据名称查找公众号"""
+        session = self.DBSession()
+        try:
+            return session.query(OfficialAccount).filter_by(name=name).first()
+        except Exception as e:
+            logger.error(f"数据库: 根据名称查找公众号失败, 错误: {e}")
+            return None
+        finally:
+            session.close()
+    
+
     def get_subscription_user(self, gh_wxid: str) -> list[Subscription]:
         """获取订阅用户"""
         session = self.DBSession()
@@ -701,7 +713,36 @@ class XYBotDB(metaclass=Singleton):
             return []
         finally:
             session.close()
-        
+
+    def save_subscription(self, user_wxid: str, gh_wxid: str) -> bool:
+        """保存订阅关系"""
+        session = self.DBSession()
+        try:
+            subscription = Subscription(user_wxid=user_wxid, gh_wxid=gh_wxid)
+            session.add(subscription)
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            logger.error(f"数据库: 保存订阅关系失败, 错误: {e}")
+            return False
+        finally:
+            session.close()
+            
+    def delete_subscription(self, user_wxid: str, gh_wxid: str) -> bool:
+        """删除订阅关系"""
+        session = self.DBSession()
+        try:
+            session.query(Subscription).filter_by(user_wxid=user_wxid, gh_wxid=gh_wxid).delete()
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            logger.error(f"数据库: 删除订阅关系失败, 错误: {e}")
+            return False
+        finally:
+            session.close()
+
     def __del__(self):
         """确保关闭时清理资源"""
         if hasattr(self, 'executor'):
