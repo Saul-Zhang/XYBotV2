@@ -33,4 +33,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: zsly-docker.pkg.coding.net/wxbot/public/wxbot:${{ env.GIT_SHA } 
+          tags: zsly-docker.pkg.coding.net/wxbot/public/wxbot:${{ env.GIT_SHA }} 
