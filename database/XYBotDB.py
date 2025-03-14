@@ -718,6 +718,10 @@ class XYBotDB(metaclass=Singleton):
         """保存订阅关系"""
         session = self.DBSession()
         try:
+            existing_subscription = session.query(Subscription).filter_by(user_wxid=user_wxid, gh_wxid=gh_wxid).first()
+            if existing_subscription:
+                logger.info(f"数据库: 订阅关系已存在, 跳过保存")
+                return True 
             subscription = Subscription(user_wxid=user_wxid, gh_wxid=gh_wxid)
             session.add(subscription)
             session.commit()
