@@ -1,6 +1,6 @@
 [basic]
 # 是否启用插件
-enable = true
+enable = false
 # ALAPI的token,用于部分API调用
 alapi_token = ""
 

@@ -1,5 +1,5 @@
 [AdminWhitelist]
-enable = true
+enable = false
 command-format = """⚙️管理白名单
 
 ➕白名单：

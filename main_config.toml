@@ -25,7 +25,7 @@ timezone = "Asia/Shanghai"             # 时区设置，中国用户使用 Asia/
 auto-restart = false                 # 仅建议在开发时启用，生产环境保持false
 
 # 消息过滤设置
-ignore-mode = "Whitelist"            # 消息处理模式：
+ignore-mode = "None"            # 消息处理模式：
 # "None" - 处理所有消息
 # "Whitelist" - 仅处理白名单消息
 # "Blacklist" - 屏蔽黑名单消息

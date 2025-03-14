@@ -1,4 +1,2 @@
 [OfficalAccountSubscribe]
 enable = true
-command = ["订阅公众号", "取消订阅公众号", "公众号列表"]
-command-format = "订阅公众号 [公众号ID]" 

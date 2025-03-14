@@ -1,4 +1,4 @@
 [BotStatus]
-enable = true
+enable = false
 command = ["status", "bot", "机器人状态", "状态"]
 status-message = "XYBot Running! 😊"

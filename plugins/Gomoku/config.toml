@@ -1,5 +1,5 @@
 [Gomoku]
-enable = true
+enable = false
 command-format = """⚙️五子棋游戏指令:
 
 ♟️创建游戏:

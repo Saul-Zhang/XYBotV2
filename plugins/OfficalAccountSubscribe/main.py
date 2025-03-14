@@ -19,16 +19,10 @@ class OfficalAccountSubscribe(PluginBase):
         self.db = XYBotDB()
         config = self.db.get_config("OfficalAccountSubscribe")
         self.enable = config.get("enable", True)
-        self.command = config.get("command", ["订阅公众号", "取消订阅公众号", "公众号列表"])
-        self.command_format = config.get("command-format", "订阅公众号 [公众号ID]")
-
-        logger.info("OfficalAccountSubscribe插件初始化完成，enable={}, command={}", self.enable, self.command)
 
     @on_official_account_message
     async def on_official_account_message(self, bot: WechatAPIClient, message: dict):
-        logger.info("收到公众号消息事件，开始处理")
-        logger.debug("消息内容：{}", message)
-        
+
         if not self.enable:
             logger.info("插件未启用，跳过处理")
             return
@@ -112,7 +106,7 @@ class OfficalAccountSubscribe(PluginBase):
                             titles.append(f"{i}.{item_title}")
                     
                     if titles:
-                        extra_msg = f"【{sourcedisplayname}】还推送了{len(titles)}篇副文章\n" + "\n".join(titles)
+                        extra_msg = f"【{sourcedisplayname}】还推送了{len(titles)}篇副文章，可自行查看\n" + "\n".join(titles)
         except Exception as e:
             logger.error("解析副文章失败: {}", str(e))
 
@@ -131,6 +125,7 @@ class OfficalAccountSubscribe(PluginBase):
     
     @on_text_message
     async def handle_text(self, bot: WechatAPIClient, message: dict):
+        logger.debug("OfficalAccountSubscribe.handle_text 开始处理消息")
         if not self.enable:
             logger.info("插件未启用，跳过处理")
             return

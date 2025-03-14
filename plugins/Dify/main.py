@@ -94,9 +94,6 @@ class Dify(PluginBase):
             user = self.db.get_user_by_wxid(sender_wxid)
             if not user or not user.ai_enabled:
                 return
-
-
-
         # if await self._check_point(bot, message):
         await self.dify(bot, message, message["Content"])
         return False

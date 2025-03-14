@@ -1,5 +1,5 @@
 [Music]
-enable = true
+enable = false
 command = ["点歌", "音乐", "音乐点播", "点播音乐", "音乐点歌"]
 command-format = """
 -----XYBot-----

@@ -63,7 +63,7 @@ class Subscription(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, comment='订阅ID')
     user_wxid = Column(String(20), nullable=False, index=True, autoincrement=False, comment='wxid')
     gh_wxid = Column(String(50), nullable=False, default="", comment='gh_wxid')
-    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now, comment='created_at')
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.datetime.now(), comment='created_at')
 
 class Config(Base):
     __tablename__ = 'config'
@@ -682,9 +682,13 @@ class XYBotDB(metaclass=Singleton):
         """获取订阅用户"""
         session = self.DBSession()
         try:
-            return session.query(Subscription).filter_by(gh_wxid=gh_wxid).all()
+            subscriptions = session.query(Subscription).filter_by(gh_wxid=gh_wxid).all()
+            return subscriptions
+        except SQLAlchemyError as e:
+            logger.error("数据库: 获取订阅用户失败, SQLAlchemy错误: {}", str(e))
+            return []
         except Exception as e:
-            logger.error(f"数据库: 获取订阅用户失败, 错误: {e}")
+            logger.error("数据库: 获取订阅用户失败, 未知错误: {}", str(e))
             return []
         finally:
             session.close()

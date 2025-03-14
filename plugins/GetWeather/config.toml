@@ -1,5 +1,5 @@
 [GetWeather]
-enable = true
+enable = false
 command-format = """⚙️获取天气：
 天气 城市名
 天气城市名
