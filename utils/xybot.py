@@ -413,8 +413,12 @@ class XYBot:
                 quote_messsage["directshare"] = int(quote_appmsg.find("directshare").text) if isinstance(
                     quote_appmsg.find("directshare"), ET.Element) else 0
             elif quote_messsage["MsgType"] == 42:  # (公众号)名片
-                    logger.debug("引用消息，{}",refermsg)
-
+                    logger.debug("引用消息详情:\n标签: {}\n属性: {}\n文本: {}\n子元素: {}",
+                               refermsg.tag,
+                               refermsg.attrib,
+                               refermsg.text,
+                               [(child.tag, child.text) for child in refermsg])
+                
         except Exception as e:
             logger.error(f"解析引用消息失败: {e}")
             return
