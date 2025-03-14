@@ -157,6 +157,18 @@ class XYBotDB(metaclass=Singleton):
             raise
 
     # USER
+    def get_users_count(self) -> int:
+        """获取用户总数"""
+        session = self.DBSession()
+        try:
+            return session.query(User).count()
+        except Exception as e:
+            logger.error(f"数据库: 获取用户总数失败, 错误: {e}")
+            return 0
+        finally:
+            session.close()
+            
+    
 
     def save_or_update_contact(self, user: User) -> bool:
         """保存或更新联系人信息"""

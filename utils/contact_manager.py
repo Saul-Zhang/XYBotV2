@@ -14,6 +14,9 @@ class ContactManager:
     async def fetch_and_save_contacts(self, bot: WechatAPIClient):
         """获取联系人信息并保存到数据库"""
         try:
+            if self.db.get_users_count() > 5:
+                logger.info("数据库中已存在用户，跳过获取通讯录信息")
+                return []
             start_time = datetime.now()
             logger.info("开始获取通讯录信息时间：{}", start_time)
 
