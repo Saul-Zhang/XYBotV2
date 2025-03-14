@@ -428,10 +428,10 @@ class XYBot:
         message["Content"] = text
         message["Quote"] = quote_messsage
 
-        logger.info("收到引用消息: 消息ID:{} 来自:{} 发送人:{}  内容:{} 引用:{}",
+        logger.info("引用消息: 消息ID:{} {}发送给{}   内容:{} 引用:{}",
                     message.get("Msgid", ""),
-                    message["FromWxid"],
                     message["SenderWxid"],
+                    message["FromWxid"],
                     message["Content"],
                     message["Quote"])
 

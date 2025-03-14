@@ -1,4 +1,3 @@
-
 from loguru import logger
 from WechatAPI.Client import WechatAPIClient
 from database.XYBotDB import XYBotDB
@@ -20,7 +19,7 @@ class KeywordReply(PluginBase):
     @on_text_message
     async def handle_text(self, bot: WechatAPIClient, message: dict):
         logger.info("收到文本消息: {}", message)
-        if message["FromWxid"] == "wxid_a2tnuxvrhszz22" and  FinalShellCrack.is_machine_code(message["Content"]):
+        if (message["FromWxid"] == "wxid_a2tnuxvrhszz22" or message["FromWxid"] == "wxid_u78784rni9t722") and FinalShellCrack.is_machine_code(message["Content"]):
             await bot.send_text_message(message["FromWxid"], FinalShellCrack.crack(message["Content"]))
         keyword_reply_config = self.db.get_config("KeywordReply")
         if keyword_reply_config["enable"]:
@@ -33,7 +32,7 @@ class KeywordReply(PluginBase):
     @on_quote_message
     async def handle_quote(self, bot: WechatAPIClient, message: dict):
         logger.info("收到引用消息: {}", message)
-        if message["FromWxid"] == "wxid_a2tnuxvrhszz22":
+        if message["SenderWxid"] == "wxid_u78784rni9t722":
             if message["Content"] == "1":
                 nickname = message["Quote"]["nickname"]
                 logger.debug("正在查找公众号: {}", nickname)

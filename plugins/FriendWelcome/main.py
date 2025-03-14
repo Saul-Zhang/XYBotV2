@@ -34,15 +34,28 @@ class FriendWelcome(PluginBase):
         logger.info("收到添加好友请求: {}", message)
         
         try:
-            # Parse the XML content to get scene, v1, v2
-            root = ET.fromstring(message.get("Content", {}).get("string", ""))
-            scene = int(root.find(".//scene").text)
-            v1 = root.find(".//encryptusername").text
-            v2 = root.find(".//ticket").text
+            # 获取XML内容字符串
+            content = message.get("Content", {}).get("string", "")
+            if not content:
+                logger.error("好友请求消息内容为空")
+                return
+                
+            # 解析XML
+            root = ET.fromstring(content)
             
-            # Accept the friend request with the parsed parameters
+            # 从XML属性中获取必要信息
+            scene = int(root.get("scene", "0"))
+            v1 = root.get("encryptusername", "")
+            v2 = root.get("ticket", "")
+            
+            if not all([scene, v1, v2]):
+                logger.error("缺少必要的好友请求参数: scene={}, v1={}, v2={}", scene, v1, v2)
+                return
+                
+            # 接受好友请求
             await bot.accept_friend(scene, v1, v2)
             logger.info("已接受好友请求: scene={}, v1={}, v2={}", scene, v1, v2)
+        
         except Exception as e:
             logger.error("处理好友请求失败: {}", str(e))
 
