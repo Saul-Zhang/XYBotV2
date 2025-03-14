@@ -121,7 +121,24 @@ class XYBotDB(metaclass=Singleton):
             if not session.query(Config).filter_by(plugin_name="GetContact").first():
                 config = Config(plugin_name="GetContact", config_data=get_contact_config)
                 session.add(config) 
-
+            # 好友欢迎插件初始配置
+            friend_welcome_config = {
+                "enable": True,
+                "welcome-message": "你好"
+            }
+            if not session.query(Config).filter_by(plugin_name="FriendWelcome").first():
+                config = Config(plugin_name="FriendWelcome", config_data=friend_welcome_config)
+                session.add(config)
+            # 关键词回复插件初始配置
+            keyword_reply_config = {
+                "enable": True,
+                "keyword": {
+                    "你好": "你好"
+                }
+            }
+            if not session.query(Config).filter_by(plugin_name="KeywordReply").first():
+                config = Config(plugin_name="KeywordReply", config_data=keyword_reply_config)
+                session.add(config)
             session.commit()
             logger.info("数据库: 成功初始化配置表数据")
         except Exception as e:
@@ -641,6 +658,9 @@ class XYBotDB(metaclass=Singleton):
         session = self.DBSession()
         try:
             return session.query(OfficialAccount).filter_by(wxid=wxid).first()
+        except Exception as e:
+            logger.error(f"数据库: 获取公众号信息失败, 错误: {e}")
+            return None
         finally:
             session.close()
     
@@ -663,6 +683,9 @@ class XYBotDB(metaclass=Singleton):
         session = self.DBSession()
         try:
             return session.query(Subscription).filter_by(gh_wxid=gh_wxid).all()
+        except Exception as e:
+            logger.error(f"数据库: 获取订阅用户失败, 错误: {e}")
+            return []
         finally:
             session.close()
         

@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 from urllib.parse import urlparse, parse_qs, urlencode
+from datetime import datetime
 
 from WechatAPI import WechatAPIClient
 from database.XYBotDB import Chatroom, OfficialAccount, XYBotDB
@@ -37,15 +38,34 @@ class OfficalAccountSubscribe(PluginBase):
             return
             
         official_account = self.db.get_official_account_by_wxid(message["FromWxid"])
-        logger.debug("公众号信息：{}", official_account)
+        logger.debug("公众号名称：{}", official_account.name if official_account else "未知")
         
         if official_account:
+            # 解析消息内容获取标题
+            try:
+                root = ET.fromstring(message["Content"])
+                appmsg = root.find('appmsg')
+                title = appmsg.find('title').text if appmsg is not None else "未知标题"
+            except Exception as e:
+                logger.error("解析公众号消息标题失败: {}", str(e))
+                title = "解析失败"
+
+            # 更新公众号最后消息信息
+            official_account.last_message = title
+            official_account.last_message_time = datetime.now()
+            if self.db.update_official_account(official_account):
+                logger.debug("更新公众号最后消息成功: {} - {}", official_account.name, title)
+            else:
+                logger.error("更新公众号最后消息失败")
+
+            # 转发消息给订阅用户
             subscriptions = self.db.get_subscription_user(official_account.wxid)
-            xml = self.parse_xml_to_appmsg(message["Content"])
-            logger.debug("转发的公众号消息：{}", xml)
-            logger.debug("公众号订阅用户：{}", subscriptions)
+            xml, extra_msg = self.parse_xml_to_appmsg(message["Content"])
+            logger.debug("公众号订阅用户数量：{}", len(subscriptions))
             for subscription in subscriptions:
                 await bot.send_app_message(subscription.user_wxid, xml, 0)
+            if extra_msg:
+                await bot.send_text_message(subscription.user_wxid, extra_msg)
         else:
             logger.info("未找到对应的公众号信息：{}", message["FromWxid"])
 
@@ -77,6 +97,25 @@ class OfficalAccountSubscribe(PluginBase):
         # 提取缩略图URL
         thumburl = appmsg.find('thumburl').text
 
+        # 检查是否有多篇文章
+        extra_msg = ""
+        try:
+            category = root.find('.//mmreader/category')
+            if category is not None:
+                items = category.findall('item')
+                if len(items) > 1:
+                    # 收集所有副文章的标题
+                    titles = []
+                    for i, item in enumerate(items[1:], 1):  # 从第二篇文章开始
+                        item_title = item.find('title').text
+                        if item_title:
+                            titles.append(f"{i}.{item_title}")
+                    
+                    if titles:
+                        extra_msg = f"【{sourcedisplayname}】还推送了{len(titles)}篇副文章\n" + "\n".join(titles)
+        except Exception as e:
+            logger.error("解析副文章失败: {}", str(e))
+
         # 字符串拼接新XML
         new_xml = f'''<appmsg appid="" sdkver="0">
                 <title>{title}</title>
@@ -88,20 +127,24 @@ class OfficalAccountSubscribe(PluginBase):
                 <thumburl>{thumburl}</thumburl>
                 </appmsg>'''.replace('\n', '')  # 移除换行符保持紧凑
 
-        return new_xml
+        return new_xml, extra_msg
     
     @on_text_message
-    async def on_text_message(self, bot: WechatAPIClient, message: dict):
+    async def handle_text(self, bot: WechatAPIClient, message: dict):
         if not self.enable:
             logger.info("插件未启用，跳过处理")
             return
-            
+
+        logger.debug("准备开始检测是否已保存当前账号")
         if message["FromWxid"].endswith("@chatroom"):
+            logger.debug("当前账号是群聊")
             chatroom = self.db.get_chatroom_by_wxid(message["FromWxid"])
             if chatroom:
+                logger.debug("当前账号已保存")
                 return
             else:
-                contact_info = await bot.get_contact(message["FromWxid"])   
+                logger.debug("当前账号未保存，开始保存")
+                contact_info = await bot.get_contact(message["FromWxid"])
                 if contact_info:
                     chatroom = Chatroom(
                         chatroom_id=message["FromWxid"],
@@ -110,11 +153,14 @@ class OfficalAccountSubscribe(PluginBase):
                         member_count=contact_info.get("MemberCount", 0),
                     )
                     self.db.save_or_update_chatroom(chatroom)
-        elif message["FromWxid"].startswith("gh_"):
+        elif message["FromWxid"].startswith("gh_"): 
+            logger.debug("当前账号是公众号")
             official_account = self.db.get_official_account_by_wxid(message["FromWxid"])
             if official_account:
+                logger.debug("当前账号已保存")
                 return
             else:
+                logger.debug("当前账号未保存，开始保存")
                 contact_info = await bot.get_contact(message["FromWxid"])
                 if contact_info:
                     official_account = OfficialAccount(

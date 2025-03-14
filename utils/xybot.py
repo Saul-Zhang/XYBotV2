@@ -80,7 +80,8 @@ class XYBot:
                 await EventManager.emit("friend_request", self.bot, message)
             else:
                 logger.warning("风控保护: 新设备登录后4小时内请挂机")
-
+        elif msg_type == 10000:  # 添加好友成功
+            await self.process_add_friend_success(message)
         elif msg_type == 51:
             pass
 
@@ -617,6 +618,12 @@ class XYBot:
                 await EventManager.emit("pat_message", self.bot, message)
             else:
                 logger.warning("风控保护: 新设备登录后4小时内请挂机")
+
+    async def process_add_friend_success(self, message: Dict[str, Any]):
+        """处理添加好友成功消息"""
+        logger.info("收到添加好友成功消息: {}", message)
+
+        await EventManager.emit("add_friend_success", self.bot, message)
 
     def ignore_check(self, FromWxid: str, SenderWxid: str):
         if self.ignore_mode == "Whitelist":

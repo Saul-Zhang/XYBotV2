@@ -230,6 +230,36 @@ def on_system_message(priority=50):
 
     return decorator if not callable(priority) else decorator(priority)
 
+def on_friend_request(priority=50):
+    """好友请求装饰器"""
+
+    def decorator(func):
+        if callable(priority):
+            f = priority
+            setattr(f, '_event_type', 'friend_request')
+            setattr(f, '_priority', 50)
+            return f
+        setattr(func, '_event_type', 'friend_request')
+        setattr(func, '_priority', min(max(priority, 0), 99))
+        return func
+
+    return decorator if not callable(priority) else decorator(priority)
+
+def on_add_friend_success(priority=50):
+    """添加好友成功装饰器"""
+
+    def decorator(func):
+        if callable(priority):
+            f = priority
+            setattr(f, '_event_type', 'add_friend_success')
+            setattr(f, '_priority', 50)
+            return f
+        setattr(func, '_event_type', 'add_friend_success')
+        setattr(func, '_priority', min(max(priority, 0), 99))
+        return func
+
+    return decorator if not callable(priority) else decorator(priority) 
+
 
 def on_other_message(priority=50):
     """其他消息装饰器"""
