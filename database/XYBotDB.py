@@ -184,6 +184,9 @@ class XYBotDB(metaclass=Singleton):
         session = self.DBSession()
         try:
             return session.query(User).filter_by(wxid=wxid).first()
+        except Exception as e:
+            logger.error(f"数据库: 获取联系人{wxid}失败, 错误: {e}")
+            return None
         finally:
             session.close()
     def save_or_update_official_account(self, official_account: OfficialAccount) -> bool:
@@ -601,6 +604,9 @@ class XYBotDB(metaclass=Singleton):
         session = self.DBSession()
         try:
             return session.query(Chatroom).filter_by(chatroom_id=wxid).first()
+        except Exception as e:
+            logger.error(f"数据库: 获取群聊信息失败, 错误: {e}")
+            return None
         finally:
             session.close()
 
@@ -612,6 +618,9 @@ class XYBotDB(metaclass=Singleton):
         try:
             config = session.query(Config).filter_by(plugin_name=plugin_name).first()
             return config.config_data if config else {}
+        except Exception as e:
+            logger.error(f"数据库: 获取 {plugin_name} 配置失败, 错误: {e}")
+            return {}
         finally:
             session.close()
 
