@@ -53,8 +53,8 @@ class FriendWelcome(PluginBase):
                 return
                 
             # 接受好友请求
-            await bot.accept_friend(scene, v1, v2)
-            logger.info("已接受好友请求: scene={}, v1={}, v2={}", scene, v1, v2)
+            # await bot.accept_friend(scene, v1, v2)
+            # logger.info("已接受好友请求: scene={}, v1={}, v2={}", scene, v1, v2)
         
         except Exception as e:
             logger.error("处理好友请求失败: {}", str(e))
