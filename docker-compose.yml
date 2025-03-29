@@ -1,6 +1,6 @@
 services:
   wxbot:
-    image: zsly-docker.pkg.coding.net/wxbot/public/wxbot:6ca4314
+    image: zsly-docker.pkg.coding.net/wxbot/public/wxbot:c3a8511
     container_name: wxbot
     restart: on-failure:3
     volumes:
