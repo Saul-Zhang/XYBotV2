@@ -99,7 +99,7 @@ class XYBotDB(metaclass=Singleton):
         try:
             # Dify插件初始配置
             dify_config = {
-                "enable": True,
+                "enable": False,
                 "api-key": "app-HOCPuTnVuv7HO2AccaBnFjIo",
                 "base-url": "https://api.dify.ai/v1",
                 "commands": ["ai", "dify", "聊天", "AI"],
@@ -123,7 +123,7 @@ class XYBotDB(metaclass=Singleton):
                 session.add(config) 
             # 好友欢迎插件初始配置
             friend_welcome_config = {
-                "enable": True,
+                "enable": False,
                 "welcome-message": "你好"
             }
             if not session.query(Config).filter_by(plugin_name="FriendWelcome").first():
@@ -131,7 +131,7 @@ class XYBotDB(metaclass=Singleton):
                 session.add(config)
             # 关键词回复插件初始配置
             keyword_reply_config = {
-                "enable": True,
+                "enable": False,
                 "keyword": {
                     "你好": "你好"
                 }
