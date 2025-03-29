@@ -1,14 +1,15 @@
 services:
-  xybotv2:
-    image: henryxiaoyang/xybotv2:latest
-    container_name: XYBotV2
+  wxbot:
+    image: zsly-docker.pkg.coding.net/wxbot/public/wxbot:6ca4314
+    container_name: wxbot
     restart: on-failure:3
     volumes:
-      - xybotv2:/app
-      - redis_data:/var/lib/redis
+      - ./robot_stat.json:/app/resource/robot_stat.json
+      - ./db/:/app/db/
+      - ./login_stat.json:/app/WechatAPI/Client/login_stat.json
+      - ./logs/:/app/logs/
+      - redis-data:/var/lib/redis
 
 volumes:
-  redis_data:
-    name: redis_data
-  xybotv2:
-    name: xybotv2
+  redis-data:
+    name: redis-data
