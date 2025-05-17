@@ -66,5 +66,5 @@ class FriendWelcome(PluginBase):
 
         logger.info("收到添加好友成功消息: {}", message)
 
-        welcome_message = self.db.get_config("FriendWelcome")["welcome-message"]
-        await bot.send_text_message(message["FromWxid"], welcome_message)
+        # welcome_message = self.db.get_config("FriendWelcome")["welcome-message"]
+        # await bot.send_text_message(message["FromWxid"], welcome_message)
