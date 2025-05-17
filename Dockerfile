@@ -21,13 +21,18 @@ COPY requirements.txt .
 
 # 安装 Python 依赖
 RUN pip install --no-cache-dir -r requirements.txt
+# 安装gunicorn和eventlet
+RUN pip install --no-cache-dir gunicorn eventlet
 
 # 复制应用代码
 COPY . .
 
-# 启动脚本
-COPY entrypoint.sh .
-RUN chmod +x entrypoint.sh
+# 创建启动脚本
+RUN echo '#!/bin/bash\n\
+redis-server /etc/redis/redis.conf --daemonize yes\n\
+python app.py' > /app/start.sh \
+    && chmod +x /app/start.sh
 
-CMD ["./entrypoint.sh"]
+# 设置启动命令
+CMD ["/app/start.sh"]
 

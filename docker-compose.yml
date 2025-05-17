@@ -3,6 +3,8 @@ services:
     image: zsly-docker.pkg.coding.net/wxbot/public/wxbot:c3a8511
     container_name: wxbot
     restart: on-failure:3
+    ports:
+      - "9999:9999"  # 映射gunicorn端口
     volumes:
       - ./robot_stat.json:/app/resource/robot_stat.json
       - ./db/:/app/db/

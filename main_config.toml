@@ -43,3 +43,11 @@ blacklist = [# 黑名单列表
     "333@chatroom", # 群聊ID
     "444@chatroom"
 ]
+
+[WebUI]
+admin-username = "admin" # 管理员账号
+admin-password = "admin123" # 管理员密码（注意安全风险！）
+session-timeout = 30 # 会话超时时间（分钟）
+
+flask-secret-key = "" # 如为空，会覆盖环境变量。如果覆盖环境变量也是空的则默认用"HenryXiaoYang_XYBotV2"
+debug = false

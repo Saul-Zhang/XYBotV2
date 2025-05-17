@@ -6,6 +6,7 @@ from loguru import logger
 
 from WechatAPI import WechatAPIClient
 from WechatAPI.Client.protect import protector
+from database.keyvalDB import KeyvalDB
 from database.messsagDB import MessageDB
 from database.XYBotDB import XYBotDB
 from utils.event_manager import EventManager
@@ -31,6 +32,7 @@ class XYBot:
 
         self.msg_db = MessageDB()
         self.bot_db = XYBotDB()
+        self.key_db = KeyvalDB()
 
 
     def update_profile(self, wxid: str, nickname: str, alias: str, phone: str):
@@ -42,6 +44,13 @@ class XYBot:
 
     async def process_message(self, message: Dict[str, Any]):
         """处理接收到的消息"""
+
+        # 数据库消息数+1先
+        msg_count = int(await self.key_db.get("messages") or 0) + 1
+        await self.key_db.set("messages", str(msg_count))
+
+        # 同时更新WebUI使用的消息计数键
+        await self.key_db.set("bot:stats:message_count", str(msg_count))
 
         msg_type = message.get("MsgType")
 
@@ -419,8 +428,8 @@ class XYBot:
                     inner_root = ET.fromstring(content_xml)
                     nickname = inner_root.get("nickname", "")
                     quote_messsage["nickname"] = nickname
-    
-                
+
+
         except Exception as e:
             logger.error(f"解析引用消息失败: {e}")
             return
@@ -454,7 +463,7 @@ class XYBot:
         except Exception as e:
             logger.error(f"解析url消息失败: {e}")
             return
-        
+
     async def process_official_account_message(self, message):
         """处理公众号消息"""
 

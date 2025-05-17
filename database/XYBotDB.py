@@ -44,7 +44,7 @@ class Chatroom(Base):
     member_count = Column(Integer, nullable=False, default=0, comment='member_count')
     small_head_img_url = Column(String(255), nullable=False, default="", comment='small_head_img_url')
     ai_enabled = Column(Boolean, nullable=False, default=False, comment='ai_enabled')
-    
+
 class OfficialAccount(Base):
     __tablename__ = 'official_account'
 
@@ -85,7 +85,6 @@ class XYBotDB(metaclass=Singleton):
 
         # 创建表
         Base.metadata.create_all(self.engine)
-        logger.success("数据库初始化成功")
 
         # 初始化配置数据
         self._init_config_data()
@@ -120,7 +119,7 @@ class XYBotDB(metaclass=Singleton):
             }
             if not session.query(Config).filter_by(plugin_name="GetContact").first():
                 config = Config(plugin_name="GetContact", config_data=get_contact_config)
-                session.add(config) 
+                session.add(config)
             # 好友欢迎插件初始配置
             friend_welcome_config = {
                 "enable": False,
@@ -167,8 +166,8 @@ class XYBotDB(metaclass=Singleton):
             return 0
         finally:
             session.close()
-            
-    
+
+
 
     def save_or_update_contact(self, user: User) -> bool:
         """保存或更新联系人信息"""
@@ -229,7 +228,7 @@ class XYBotDB(metaclass=Singleton):
             if not existing_chatroom:
                 session.add(chatroom)
             else:
-                existing_chatroom.members = chatroom.members    
+                existing_chatroom.members = chatroom.members
                 existing_chatroom.member_count = chatroom.member_count
                 existing_chatroom.small_head_img_url = chatroom.small_head_img_url
             session.commit()
@@ -684,7 +683,7 @@ class XYBotDB(metaclass=Singleton):
             return None
         finally:
             session.close()
-    
+
     def update_official_account(self, official_account: OfficialAccount) -> bool:
         """更新公众号信息"""
         session = self.DBSession()
@@ -709,7 +708,7 @@ class XYBotDB(metaclass=Singleton):
             return None
         finally:
             session.close()
-    
+
 
     def get_subscription_user(self, gh_wxid: str) -> list[Subscription]:
         """获取订阅用户"""
@@ -733,7 +732,7 @@ class XYBotDB(metaclass=Singleton):
             existing_subscription = session.query(Subscription).filter_by(user_wxid=user_wxid, gh_wxid=gh_wxid).first()
             if existing_subscription:
                 logger.info(f"数据库: 订阅关系已存在, 跳过保存")
-                return True 
+                return True
             subscription = Subscription(user_wxid=user_wxid, gh_wxid=gh_wxid)
             session.add(subscription)
             session.commit()
@@ -744,7 +743,7 @@ class XYBotDB(metaclass=Singleton):
             return False
         finally:
             session.close()
-            
+
     def delete_subscription(self, user_wxid: str, gh_wxid: str) -> bool:
         """删除订阅关系"""
         session = self.DBSession()
@@ -756,6 +755,13 @@ class XYBotDB(metaclass=Singleton):
             session.rollback()
             logger.error(f"数据库: 删除订阅关系失败, 错误: {e}")
             return False
+        finally:
+            session.close()
+
+    def get_users_count(self):
+        session = self.DBSession()
+        try:
+            return session.query(User).count()
         finally:
             session.close()
 

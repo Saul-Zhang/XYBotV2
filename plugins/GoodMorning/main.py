@@ -13,7 +13,10 @@ from utils.plugin_base import PluginBase
 class GoodMorning(PluginBase):
     description = "早上好插件"
     author = "HenryXiaoYang"
-    version = "1.0.0"
+    version = "1.0.1"
+
+    # Change Log
+    # 1.0.1 fix ssl issue, add timeout
 
     def __init__(self):
         super().__init__()
@@ -44,12 +47,15 @@ class GoodMorning(PluginBase):
         for id in id_list:
             if id.endswith("@chatroom"):
                 chatrooms.append(id)
-
-        async with aiohttp.request("GET", "https://zj.v.api.aa1.cn/api/bk/?num=1&type=json") as req:
-            resp = await req.json()
-            history_today = "N/A"
-            if resp.get("content"):
-                history_today = str(resp.get("content")[0])
+        try:
+            async with aiohttp.request("GET", "http://zj.v.api.aa1.cn/api/bk/?num=1&type=json",
+                                       timeout=aiohttp.ClientTimeout(total=20)) as req:
+                resp = await req.json()
+                history_today = "无"
+                if resp.get("content"):
+                    history_today = str(resp.get("content")[0])
+        except asyncio.TimeoutError:
+            history_today = "🛜网络超时😭"
 
         weekend = ["一", "二", "三", "四", "五", "六", "日"]
         message = ("----- XYBot -----\n"
